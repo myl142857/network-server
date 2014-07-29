@@ -1,0 +1,1 @@
+var networkProject = angular.module('networkProject', []);

@@ -1,0 +1,59 @@
+<!-- index.html -->
+<!doctype html>
+
+<!-- ASSIGN OUR ANGULAR MODULE -->
+<html ng-app="lobbyProject">
+<head>
+	<!-- META -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1"><!-- Optimize mobile viewport -->
+
+	<title>Network Chat Portal</title>
+
+	<!-- SCROLLS -->
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"><!-- load bootstrap -->
+	<style>
+		html 								{ overflow-y:scroll; }
+		body 								{ padding-top:50px; }
+		#view_tab,#edit_tab,#home_tab 		{ margin-bottom:30px; }
+		.lobby_container					{ width:100%;}
+		.lobby_container div				{ margin:1%; }
+		.user_container, .room_container	{ float:left;width:45%; }
+		
+		
+	</style>
+
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script><!-- load jquery -->
+	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.8/angular.min.js"></script><!-- load angular -->
+	<script src="/javascripts/lobby_core.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+
+</head>
+<!-- SET THE CONTROLLER AND GET ALL TODOS -->
+<body ng-controller="lobbyController">
+	<div class="lobby_container">
+		<div class="well user_container">
+			<b>Users:</b>
+			<div ng-repeat="user in users">
+				{{ user.name }}
+			</div>
+			<br>
+			<form>
+			    <input type='text' id="field" placeholder="username" ng-model='user.name'>
+			    <input type='submit' value='Login' ng-click='login(user)' /> 
+			</form>
+		</div>
+		<div class="well room_container">
+			<b>Rooms:</b>
+			<div ng-repeat="room in rooms">
+				<div class="well"><b>{{ room.name }}</b><button type="button" style="margin-left:5px" ng-click='join_room({{ room.name }})'>Join</button></div>
+			</div>
+			<br>
+			<form style="margin-top:10px">
+			    <input type='text' id="field" placeholder="roomname" ng-model='room.name'>
+			    <input type='submit' value='Create Room' ng-click='create_room(room)' /> 
+			</form>
+		</div>
+	</div>
+</body>
+</html>
