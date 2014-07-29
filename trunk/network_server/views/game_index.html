@@ -1,0 +1,128 @@
+<!-- index.html -->
+<!doctype html>
+
+<!-- ASSIGN OUR ANGULAR MODULE -->
+<html ng-app="networkProject">
+<head>
+	<!-- META -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1"><!-- Optimize mobile viewport -->
+
+	<title>Network Chat Portal</title>
+
+	<!-- SCROLLS -->
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"><!-- load bootstrap -->
+	<style>
+		html 							{ overflow-y:scroll; }
+		body 							{ padding-top:50px; }
+		#view_tab,#edit_tab,#home_tab 	{ margin-bottom:30px; }
+		.game_container					{ width:100%;}
+		.game_container div				{ margin:1%; }
+		.chat_window					{ padding-left:5px; background:#000000; color:#ffff00; height: 300px; overflow-y:scroll; }
+		
+		.action_container				{ width:100%;float:left; }
+		.stat_container					{ width:15%; float:left; }
+		.hand_container					{ width:60%; float:left; }
+		.deck_container					{ width:15%; float:left; }
+		.card_div						{ padding:5px; cursor:pointer; }
+		.stat_label						{ width:100% }
+		
+		.icon_div						{ float:right; }
+		.icon_div div					{ }
+		.coin_icon, .card_icon			{ height:15px; width:15px; margin-right:5px;}
+		
+		
+	</style>
+
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script><!-- load jquery -->
+	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.8/angular.min.js"></script><!-- load angular -->
+	<script src="/javascripts/game_core.js"></script>
+	<script src="/javascripts/game_actions.js"></script>
+	<script src="/javascripts/global.js"></script>
+	<script src="/javascripts/services.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+
+</head>
+<!-- SET THE CONTROLLER AND GET ALL TODOS -->
+<body ng-controller="gameController">
+	<div class="game_container">
+		<div class="well buy_container" style="float:left;width:30%">
+		    <div class="buy_div" ng-repeat="card in filterCards(cards,'type',['action'])">
+		    	<div class="well card_div" ng-click="buy_card(card)"> {{ card.name }} 
+		    		<div class="icon_div">
+			    			<img class="coin_icon" src="/images/coin_icon.png"/> {{ card.cost }} 
+			    			<img class="card_icon" src="/images/card_icon.png"/>{{ card.current_quantity }} 
+		    		</div>
+		    	</div>
+		    </div>
+		</div>
+		<div class="well log_container" style="float:left;width:30%">
+		    <div class="log_div">
+		    	<div id="content" class="chat_window"></div>
+		    </div>
+		    <div class="well">
+			    <form>
+				    <input type='text' id="field" placeholder="message" ng-model='user.message'>
+				    <input type='submit' value='Send' ng-click='send(user)' /> 
+				</form>
+			</div>
+		</div>
+		<div class="well victory_container" style="float:left;width:30%">
+		    <div class="victory_div" ng-repeat="card in filterCards(cards,'type',['coin','victory'])">
+		    	<div class="well card_div" ng-click="buy_card(card)"> {{ card.name }} 
+		    		<div class="icon_div">
+			    			<img class="coin_icon" src="/images/coin_icon.png"/> {{ card.cost }} 
+			    			<img class="card_icon" src="/images/card_icon.png"/>{{ card.current_quantity }} 
+		    		</div>
+		    	</div>
+		    </div>
+		</div>
+		<br>
+		<div class="action_container">
+			<div class="stat_container">
+				<div class="well" style="float:left;width:100%;display:inline;">
+					<div class="stat_label well card_div">
+						<b> Turn: {{ stats.turn }} </b>
+					</div>
+					<div class="stat_label well card_div">
+						<b> Actions: {{ stats.action }} </b>
+					</div>
+					<div class="stat_label well card_div">
+						<b> Buys: {{ stats.buy }} </b>
+					</div>
+					<div class="stat_label well card_div">
+						<b> Money: {{ stats.money }} </b>
+					</div>
+				</div>
+			</div>
+			<div class="hand_container">
+				<div class="well" style="float:left;width:100%;">
+					<div class="hand_label" style="height:20px">
+						<b> Hand </b>
+					</div>
+					<div class="hand_div" ng-repeat="card in hand">
+						<div class="well card_div useable_card" ng-click="use_card($index)"> {{ card.name }} </div>
+					</div>
+				</div>
+			</div>
+			<div class="deck_container">
+				<div class="well" style="float:left;width:100%;">
+					<div class="deck_label" style="height:20px">
+						<b> Deck </b>
+					</div>
+					<div class="deck_div">
+						<div class="well card_div"> {{ deck.length }} </div>
+					</div>
+					<div class="deck_label" style="height:20px">
+						<b> Discard </b>
+					</div>
+					<div class="deck_div">
+						<div class="well card_div"> {{ discard.length }} </div>
+					</div>
+					<button type="button" ng-click="end_turn()" style="margin-top:10px">End Turn</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!-- index.html -->
+<!doctype html>
+
+<!-- ASSIGN OUR ANGULAR MODULE -->
+<html ng-app="networkProject">
+<head>
+	<!-- META -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1"><!-- Optimize mobile viewport -->
+
+	<title>Network Chat Portal</title>
+
+	<!-- SCROLLS -->
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"><!-- load bootstrap -->
+	<style>
+		html 							{ overflow-y:scroll; }
+		body 							{ padding-top:50px; }
+		#view_tab,#edit_tab,#home_tab 	{ margin-bottom:30px; }
+		.chat_window					{ background:#000000; color:#ffff00; height: 300px; overflow-y:scroll; }
+		
+	</style>
+
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script><!-- load jquery -->
+	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.8/angular.min.js"></script><!-- load angular -->
+	<script src="/javascripts/chat_core.js"></script>
+	<script src="/javascripts/global.js"></script>
+	<script src="/javascripts/services.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+
+</head>
+<!-- SET THE CONTROLLER AND GET ALL TODOS -->
+<body ng-controller="mainController">
+
+	<div class="login_container" style="float:left">
+		<div class="well">
+			<!-- <div>
+				<h1>Logged in as</h1>
+			</div>
+			<br> -->
+			<div style="text-align:center">
+				<h1>{{ username }}</h1>
+			</div>
+		</div>
+	    <div class="well">
+		    <form>
+		    <input type='text' id="username" placeholder="username" ng-model='user.name'>
+		    <input type='submit' value='Login' ng-click='login(user)' /> 
+			</form>
+		</div>
+	</div>
+	<div class="chat_container" style="float:left">
+	    <div class="well">
+	    	<div id="content" class="well chat_window">
+	    </div>
+	    <div class="well">
+		    <form>
+		    <input type='text' id="field" placeholder="message" ng-model='user.message'>
+		    <input type='submit' value='Send' ng-click='send(user)' /> 
+			</form>
+		</div>
+	</div>
+</body>
+</html>
