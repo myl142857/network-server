@@ -1,0 +1,10 @@
+#!/usr/bin/env node
+//var debug = require('debug')('my-application');
+var app = require('../app');
+var index = require('../routes/index');
+
+app.set('port', process.env.PORT || 3000);
+
+console.log('Getting Port...');
+
+index.run_server(app.listen(app.get('port')));
