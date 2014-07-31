@@ -84,12 +84,12 @@ function lobbyController($scope, $http, $compile, socket) {
 	};
 	
 	$scope.login = function(user){
-		console.log('Login Clicked');
-		//socket.emit('login', { message: "Test User", username: "Test User", action:'login'});
+		
+		//Need to create the user
 		$http.post('/login', { username: user.name})
 		.success(function(data) {
-			console.log('Logged In As...');
-			console.log(data);
+			//Then attach the user to the socket...
+			socket.emit('login', { name: data.name });
 		})
 		.error(function(data) {
 			console.log('Error: ' + data);
@@ -106,10 +106,27 @@ function lobbyController($scope, $http, $compile, socket) {
 			}else if(data === 'room_name'){
 				alert('A room by this name already exists!');
 			}else{
-				//link to room
 				console.log('Room Created!');
-				console.log(data);
-				window.location = "http://localhost:3000/game";
+				$http.post('/join_room', { roomname: room.name})
+				.success(function(data) {
+					if(data === 'username'){
+						alert('You must log in to create a room!');
+					}else if(data === 'in_room'){
+						alert('You are already in this room!');
+					}else if(data === 'max_users'){
+						alert('This room has already reached it\'s max users!');
+					}else if(data === 'not_exists'){
+						alert('This room doesn\'t exist!');
+					}else{
+						//link to room
+						console.log('Room Joined!');
+						console.log(data);
+						window.location = "http://localhost:3000/game";
+					}
+				})
+				.error(function(data) {
+					console.log('Error: ' + data);
+				});
 			}
 		})
 		.error(function(data) {
@@ -119,7 +136,7 @@ function lobbyController($scope, $http, $compile, socket) {
 	
 	$scope.join_room = function(room){
 		console.log('Attempting to join room');
-		$http.post('/create_room', { roomname: room.name})
+		$http.post('/join_room', { roomname: room})
 		.success(function(data) {
 			if(data === 'username'){
 				alert('You must log in to create a room!');
@@ -149,6 +166,10 @@ function lobbyController($scope, $http, $compile, socket) {
 	    	 $scope.rooms = data.rooms;
 	     });
 	  };
+	  
+	  $scope.test = function(){
+			console.log("Test"); 
+		 };
 	 
 	$scope.loadData();
 	
