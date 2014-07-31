@@ -1,13 +1,4 @@
 function Game(name, id, owner) {
-  this.name = name;
-  this.id = id;
-  this.owner = owner;
-  this.people = [];
-  this.peopleLimit = 2;
-  this.status = "available";
-  this.private = false;
-  
-  this.username = "";
   this.deck = [];
   this.discard = [];
   this.hand = [];
@@ -15,6 +6,25 @@ function Game(name, id, owner) {
   this.player_turn = false;
   
 };
+
+Game.prototype.shuffle = function(array){
+  var currentIndex = array.length, temporaryValue, randomIndex;
+
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+}
 
 Game.prototype.use = function(scope,card){
 	//$scope.stats = {turn:0,action:0,buy:0,money:0};

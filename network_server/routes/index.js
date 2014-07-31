@@ -17,6 +17,7 @@ var Room = require('../room');
 //var http = require('http');
 
 var lobby = new Room("Lobby", "001", "admin");
+var clients = {};
 var game_rooms = [];
 
 /*var people = [];
@@ -82,16 +83,6 @@ router.get('/chat', function(req, res) {
 
 router.get('/game', function(req, res) {
     res.sendfile(req.abs_path + '/views/game_index.html');
-});
-
-/*GET all meta*/
-router.get('/all', function(req, res) {
-    var db = req.db;
-    var collection = db.get('card');
-    collection.find({},{},function(e,docs){
-        res.setHeader('Content-Type', 'application/json');
-        res.send(docs);
-    });
 });
 
 router.post('/add_quiz', function(req, res) {
@@ -233,7 +224,12 @@ router.run_server = function(listener){
 	console.log('Socket Set');
 	
 	server.sockets.on('connection', function (socket) {
-	    socket.emit('message', { message: 'welcome to the chat' });
+		
+		//var socket_id = socket.id;
+		
+		clients[socket.id] = socket;
+		
+	    //socket.emit('message', { message: 'welcome to the chat' });
 	    
 	    router.check_username = function(username){
 	    	if(username === "" || username === undefined){
@@ -241,16 +237,30 @@ router.run_server = function(listener){
 			}
 	    	return true;
 	    }
-	    
-		router.post('/login', function(req, res) {
-			console.log(req.param('username'));
-			req.session.username = req.param('username');
-			//lobby.add_user(req.sessionID,req.session.username);
-			lobby.add_user(socket.id,req.session.username);
-			server.sockets.emit('user', { users: lobby.people });
-			res.send(req.session.username);
-		});
 		
+	    /*GET all meta*/
+	    router.get('/get_cards', function(req, res) {
+	        var db = req.db;
+	        var collection = db.get('card');
+	        var room = find_room(req.session.username);
+	        var player = room.get_user(req.session.username);
+	        //room.pick_first();
+	        //socket.emit('message', { message: 'welcome to the chat' });
+	        collection.find({},{},function(e,docs){
+	            res.setHeader('Content-Type', 'application/json');
+		        room.create_game(docs);
+		        console.log(room);
+	            res.send({
+	            	first:room.is_first(req.session.username),
+	            	cards:room['cards'],
+	            	deck:player['deck'],
+	            	hand:player['hand'],
+	            	discard:player['discard'],
+	            	stats:player['stats']
+	            });
+	        });
+	    });
+	    
 		router.post('/create_room', function(req, res) {
 			console.log(req.param('roomname'));
 			//Check to make sure that the user has a username....
@@ -272,19 +282,21 @@ router.run_server = function(listener){
 				}
 				if(!found_room){
 					//Add the room to the socket...
-					socket.room = req.param('roomname');
-					socket.join(socket.room);
+					//socket.room = req.param('roomname');
+					//socket.join(socket.room);
 					
 					//Add the room to the server. The name will refer to the socket later
 					var new_room = new Room(req.param('roomname'), req.sessionID, req.session.username);
-					new_room.add_user(socket.id,req.session.username);
+					
+					//req.sessionID
+					//new_room.add_user(req.session.username,lobby.find_socket(req.session.username));
 					game_rooms.push(new_room);
 					
 					//Show the other users that the room has been created
 					server.sockets.emit('room', { rooms: game_rooms });
 					
 					//Return the room name
-					res.send(req.param('roomname'));
+					res.send({name: req.param('roomname')});
 				}
 			}
 		});
@@ -294,64 +306,105 @@ router.run_server = function(listener){
 			//Check to make sure that the room exists
 			if(!router.check_username(req.session.username)){
 				res.send('username');
-			}
-			//Find the room that exists by the given name
-			var joining_room = "";
-			var found_room = false;
-			
-			for(var room in game_rooms){
-				if(game_rooms[room]['name'] == req.param('roomname')){
-					res.send('room_name');
-					joining_room = game_rooms[room];
-					found_room = true;
+			}else{
+				//Find the room that exists by the given name
+				var joining_room = "";
+				var found_room = false;
+				
+				for(var room in game_rooms){
+					if(game_rooms[room]['name'] == req.param('roomname')){
+						res.send('room_name');
+						joining_room = game_rooms[room];
+						found_room = true;
+					}
 				}
-			}
-			if(found_room){
-				if(joining_room.people.length < joining_room.max_users){
-					if(!joining_room.find_user(socket.id)){
-						new_room.add_user(socket.id,req.session.username);
-						//server.sockets.emit('user', { users: lobby.people });
-						res.send('joined');
+				if(found_room){
+					if(joining_room.people.length < joining_room.max_users){
+						//if(!joining_room.find_user(socket.id)){
+							//socket.room = joining_room['name'];
+							//socket.join(socket.room);
+							
+							joining_room.add_user(req.session.username,lobby.find_socket(req.session.username));
+							
+							//server.sockets.emit('user', { users: lobby.people });
+							res.send('joined');
+						//}else{
+						//	res.send('in_room');
+						//}
 					}else{
-						res.send('in_room');
+						res.send('max_users');
 					}
 				}else{
-					res.send('max_users');
+					res.send('not_exists');
 				}
-			}else{
-				res.send('not_exists');
 			}
 		});
-	    
-	    socket.on('send', function (data) {
-	        server.sockets.emit('message', data);
+		
+		//game_talk
+		socket.on('game_talk', function (data) {
+	    	for(var room in game_rooms){
+				if(game_rooms[room].find_user(data.name)){
+					server.sockets.in(game_rooms[room]['name']).emit('message',{username:data.name,message : data.message});
+				}else{
+					console.log('User not here!');
+				}
+			}
 	    });
-	    
+		
+		router.get('/enter_game', function(req, res) {
+			res.send({name : req.session.username});
+		});
+		
+		socket.on('enter_game', function (data) {
+			console.log('Current Socket');
+			console.log(socket.id);
+	    	for(var room in game_rooms){
+	    		console.log(game_rooms[room]);
+				if(game_rooms[room].find_user(data.name)){
+					game_rooms[room].update_socket(data.name,socket.id);
+					socket.room = game_rooms[room]['name'];
+					socket.join(socket.room);
+					server.sockets.in(game_rooms[room]['name']).emit('message',{message : data.name + " joined room " + game_rooms[room]['name']});
+					if(game_rooms[room]['people'].length == game_rooms[room]['max_users']){
+						console.log('Starting game!');
+						server.sockets.in(game_rooms[room]['name']).emit('start_game',{message : "Starting game!"});
+					}else{
+						var waiting = (game_rooms[room]['max_users'] - game_rooms[room]['people'].length);
+						server.sockets.in(game_rooms[room]['name']).emit('message',{message : "Waiting for " + waiting + " more " + (waiting==1?"user":"users")});
+					}
+				}else{
+					console.log('User not here!');
+				}
+			}
+	    });
+		
+		//We have to attach the router to the client socket here
+		router.post('/login', function(req, res) {
+			console.log(req.param('username'));
+			req.session.username = req.param('username');
+			res.send({name: req.session.username});
+		});
+		
+		//and here
 	    socket.on('login', function (data) {
-	    	console.log('Login');
-	    	console.log(data);
-	    	console.log(router);
-	    	var session = require('../app').get('session');
-	    	console.log(session);
-	    	console.log(session['Cookie']);
-	    	console.log(session['Store']);
-	    	console.log(session['Session']);
-	    	console.log(session['Cookie']());
-	    	console.log(session['Store']());
-	    	console.log(session['Session']());
-	    	console.log('End Login');
-	        //server.sockets.emit('message', data);
+	    	lobby.add_user(data.name,socket.id);
+	    	server.sockets.emit('user', { users: lobby.people });
+	    	for(var person in lobby['people']){
+				console.log(lobby['people'][person]['name']);
+				clients[lobby['people'][person]['socket']].emit('message', {message : "Joined Room: " + lobby['name']});
+			}
 	    });
+	    
 	});
 };
 
-/*server.sockets.on('connection', function (socket) {
-    socket.emit('message', { message: 'welcome to the chat' });
-    socket.on('send', function (data) {
-        server.sockets.emit('message', data);
-    });
-});*/
+function find_room(user){
+	for(var room in game_rooms){
+		if(game_rooms[room].find_user(user)){
+			return game_rooms[room];
+		}
+	}
+	return null;
+}
 
 module.exports = router;
-
-console.log('End of Index');

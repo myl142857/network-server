@@ -1,17 +1,55 @@
 function gameController($scope, $http, $compile, socket) {
 	var quiz_name = "";
 	
+	//var socket = io.connect("127.0.0.1:3000");
+	
 	//A holder for the post form data
 	$scope.formData = {};
-	$scope.cards = [];
 	$scope.messages = [];
-	$scope.username = "tester";
+	$scope.username = "";
+	
+	$scope.cards = [];
 	$scope.deck = [];
 	$scope.discard = [];
 	$scope.hand = [];
+	$scope.hand_index = [];
 	$scope.stats = {turn:0,action:0,buy:0,money:0};
 	$scope.player_turn = true;
  
+	socket.on('start_game', function (data) {
+		console.log('Starting game!');
+		socket.emit('game_talk',{ message: "Starting game!", name: "Server" });
+	     $http.get('/get_cards').success(function(data) {
+		   	 console.log(data);
+		   	 /*
+		   	  * first:room.is_first(req.session.username),
+	            	cards:room['cards'],
+	            	deck:player['deck'],
+	            	hand:player['hand'],
+	            	discard:player['discard'],
+	            	stats:player['stats']
+		   	  */
+		   	 $scope.player_turn = data.first;
+		   	 $scope.cards = data.cards;
+		   	 $scope.deck = data.deck;
+			 $scope.discard = data.discard;
+			 $scope.hand_index = data.hand;
+			 $scope.hand = [];
+			 angular.forEach(data.hand, function(card_index) {
+				 $scope.hand.push($scope.cards[card_index]);
+			 });
+			 $scope.stats = data.stats;
+		   	 
+		   	 //angular.forEach(data.cards, function(card) {
+		   	 //	 card['current_quantity'] = card['quantity'];
+		   	 //});
+		   	 //$scope.cards = data.cards;
+		   	 //$scope.createDeck();
+			 //$scope.deck = shuffle($scope.deck);
+			 //$scope.draw();
+		 });
+    });
+	
     socket.on('message', function (data) {
     	console.log(data);
         if(data.message) {
@@ -45,16 +83,8 @@ function gameController($scope, $http, $compile, socket) {
 	$scope.send = function(user){
 		console.log(user.message);
 		if($scope.username != ""){
-			socket.emit('send', { message: user.message, username: $scope.username, action:'talk'});
-		}else{
-			alert("Please login to the chat!");
+			socket.emit('game_talk', { message: user.message, name: $scope.username });
 		}
-	};
-	
-	$scope.login = function(user){
-		console.log(user.name);
-		$scope.username = user.name;
-		$("#username").val('');
 	};
 	
 	$scope.filterCards = function(cards,field,values){
@@ -69,35 +99,6 @@ function gameController($scope, $http, $compile, socket) {
         });
         return result;
 	}
-	   
-	 $scope.loadData = function () {
-		 console.log("Loading Page");
-	     $http.get('/all').success(function(data) {
-	    	 console.log(data);
-	    	 angular.forEach(data, function(card) {
-	    		 card['current_quantity'] = card['quantity'];
-	    	 });
-	    	 $scope.cards = data;
-	    	 $scope.createDeck();
-	    	 $scope.deck = shuffle($scope.deck);
-	    	 $scope.draw();
-	     });
-	  };
-	
-	  $scope.createDeck = function(){
-		  angular.forEach($scope.cards, function(card) {
-			 if(card['name'] == "Estate"){
-				 for(var i = 0; i < 3; i++){
-					 $scope.deck.push(card);
-				 }
-			 }
-			 if(card['name'] == "Copper"){
-				 for(var i = 0; i < 7; i++){
-					 $scope.deck.push(card);
-				 }
-			 }
-		  });
-	 };
 	
 	 $scope.draw = function(){
 		 for(var i = 0; i < 5; i++){
@@ -147,6 +148,20 @@ function gameController($scope, $http, $compile, socket) {
 			 $scope.discard.push($scope.hand.pop());
 		 }
 	 };
+	 
+	 $scope.test = function(){
+			console.log("Test"); 
+	};
+	 
+	 $scope.loadData = function () {
+		 console.log("Loading Page");
+		 
+		 $http.get('/enter_game').success(function(data) {
+			 console.log(data);
+	    	 $scope.username = data.name;
+	    	 socket.emit('enter_game', { name: $scope.username });
+	     });
+	  };
 	 
 	$scope.loadData();
 	

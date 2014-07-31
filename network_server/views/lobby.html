@@ -46,7 +46,7 @@
 		<div class="well room_container">
 			<b>Rooms:</b>
 			<div ng-repeat="room in rooms">
-				<div class="well"><b>{{ room.name }}</b><button type="button" style="margin-left:5px" ng-click='join_room({{ room.name }})'>Join</button></div>
+				<div class="well"><b>{{ room.name }}</b><button type="button" style="margin-left:5px" ng-click='join_room(room.name)'>Join</button></div>
 			</div>
 			<br>
 			<form style="margin-top:10px">
