@@ -20,16 +20,7 @@ function gameController($scope, $http, $compile, socket) {
 		console.log('Starting game!');
 		socket.emit('game_talk',{ message: "Starting game!", name: "Server" });
 	     $http.get('/get_cards').success(function(data) {
-		   	 console.log(data);
-		   	 /*
-		   	  * first:room.is_first(req.session.username),
-	            	cards:room['cards'],
-	            	deck:player['deck'],
-	            	hand:player['hand'],
-	            	discard:player['discard'],
-	            	stats:player['stats']
-		   	  */
-		   	 $scope.player_turn = data.first;
+		   	 $scope.player_turn = data.turn;
 		   	 $scope.cards = data.cards;
 		   	 $scope.deck = data.deck;
 			 $scope.discard = data.discard;
@@ -39,27 +30,29 @@ function gameController($scope, $http, $compile, socket) {
 				 $scope.hand.push($scope.cards[card_index]);
 			 });
 			 $scope.stats = data.stats;
-		   	 
-		   	 //angular.forEach(data.cards, function(card) {
-		   	 //	 card['current_quantity'] = card['quantity'];
-		   	 //});
-		   	 //$scope.cards = data.cards;
-		   	 //$scope.createDeck();
-			 //$scope.deck = shuffle($scope.deck);
-			 //$scope.draw();
+			 if($scope.player_turn){
+				 socket.emit('game_talk', { message: "I'm starting this game!", name: $scope.username }); 
+			 }
 		 });
+    });
+	
+	socket.on('update', function (data) {
+    	console.log(data);
+    	$scope.player_turn = data.turn;
+	   	 $scope.cards = data.cards;
+	   	 $scope.deck = data.deck;
+		 $scope.discard = data.discard;
+		 $scope.hand_index = data.hand;
+		 $scope.hand = [];
+		 angular.forEach(data.hand, function(card_index) {
+			 $scope.hand.push($scope.cards[card_index]);
+		 });
+		 $scope.stats = data.stats;
     });
 	
     socket.on('message', function (data) {
     	console.log(data);
         if(data.message) {
-            if(data.action == 'use'){
-            	data.message = 'uses ' + data.message;
-            }
-            if(data.action == 'buy'){
-            	$scope.opponent_buy_card(data.message);
-            	data.message = 'buys ' + data.message;
-            }
         	$scope.messages.push(data);
             var html = '';
             for(var i=0; i<$scope.messages.length; i++) {
@@ -69,15 +62,13 @@ function gameController($scope, $http, $compile, socket) {
             $('#content').html(html);
             $("#content").scrollTop($("#content")[0].scrollHeight);
             $("#field").val('');
-            if(data.action === 'end_turn'){
-	            $scope.player_turn = !$scope.player_turn;
-	            if($scope.player_turn){
-	            	$scope.draw();
-	            }
-            }
         } else {
             console.log("There is a problem:", data);
         }
+    });
+    
+    socket.on('end_game', function (data) {
+    	console.log('The game has ended!');
     });
 	
 	$scope.send = function(user){
@@ -99,55 +90,30 @@ function gameController($scope, $http, $compile, socket) {
         });
         return result;
 	}
-	
-	 $scope.draw = function(){
-		 for(var i = 0; i < 5; i++){
-			 if($scope.deck.length<1){
-				 $scope.deck = $scope.discard;
-				 shuffle($scope.deck);
-			 }
-			 $scope.hand.push($scope.deck.pop());
-		 }
-		 $scope.stats['turn']++;
-		 $scope.stats['action'] = 1;
-		 $scope.stats['buy'] = 1;
+	 $scope.use_card = function(card){
+		 //Unlike buys, we need to know the exact index of the card in the player's hand
+		 console.log('Using card');
+		 socket.emit('player_use', { name: $scope.username, card:card });
 	 };
-	 
-	 $scope.use_card = function(index){
-		 console.log("Clicked On Card");
-		 console.log($scope.hand[index]);
-		 use($scope,$scope.hand[index]);
-		 $scope.discard.push($scope.hand[index]);
-		 socket.emit('send', { message: $scope.hand[index]['name'], username: $scope.username, action:'use'});
-		 $scope.hand.splice(index, 1);
-	 };
-	 
-	 $scope.opponent_buy_card = function(buy_card){
-		console.log(buy_card);
-		console.log('Searching');
-		for(var card in $scope.cards){
-			console.log($scope.cards[card]);
-			if($scope.cards[card]['name'] == buy_card){
-				buy_opponent($scope,$scope.cards[card]);
-			}
-	 	}
-	 };
-	 
+
 	 $scope.buy_card = function(card){
-		 console.log("Clicked On Card");
-		 console.log(card);
-		 if(buy($scope,card)){
-			 socket.emit('send', { message: card['name'], username: $scope.username, action:'buy'});
-		 }
+		 socket.emit('player_buy', { name: $scope.username, card:card });
 	 };
 	 
 	 $scope.end_turn = function(){
-		console.log("Turn Ended!"); 
-		socket.emit('send', { message: 'ends turn', username: $scope.username, action:'end_turn'});
-		while($scope.hand.length > 0){
-			 $scope.discard.push($scope.hand.pop());
-		 }
+		//console.log("Turn Ended!"); 
+		//increment_turn
+		socket.emit('increment_turn', { name: $scope.username });
+		//socket.emit('send', { message: 'ends turn', username: $scope.username, action:'end_turn'});
+		//while($scope.hand.length > 0){
+		//	 $scope.discard.push($scope.hand.pop());
+		// }
 	 };
+	 
+	 $scope.exit_game = function(){
+		 socket.emit('exit_game',{ name:$scope.username });
+		 window.location = "http://localhost:3000/";
+	 }
 	 
 	 $scope.test = function(){
 			console.log("Test"); 
@@ -162,6 +128,22 @@ function gameController($scope, $http, $compile, socket) {
 	    	 socket.emit('enter_game', { name: $scope.username });
 	     });
 	  };
+	  
+	  /*$('.popover').on({
+		    mousemove: function(e) {
+		        $(this).next('img').css({
+		            top: e.pageY - 260,
+		            left: e.pageX + 10
+		        });
+		    },
+		    mouseenter: function() {
+		        var big = $('<img />', {'class': 'big_img', src: this.src});
+		        $(this).after(big);
+		    },
+		    mouseleave: function() {
+		        $('.big_img').remove();
+		    }
+		});*/
 	 
 	$scope.loadData();
 	

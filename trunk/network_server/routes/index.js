@@ -4,7 +4,7 @@ var express = require('express');
 var router = express.Router();
 var uuid = require('node-uuid');
 //var app = require('../app');
-var game = require('../game');
+//var game = require('../game');
 var Room = require('../room');
 //console.log(express());
 //console.log(router);
@@ -25,32 +25,38 @@ var games = {};
 var clients = [];*/
 
 var card_meta = [ 
-                  {name:"Province",deck:"dominion",quantity:8,picture:"",type:"victory",cost:8,attrs:{victory:"6"}},
-                  {name:"Duchy",deck:"dominion",quantity:8,picture:"",type:"victory",cost:5,attrs:{victory:"3"}},
-                  {name:"Estate",deck:"dominion",quantity:8,picture:"",type:"victory",cost:2,attrs:{victory:"1"}},
-                  {name:"Province",deck:"dominion",quantity:8,picture:"",type:"victory",cost:8,attrs:{victory:"6"}},
-                 {name:"Gold",deck:"dominion",quantity:20,picture:"",type:"coin",cost:6,attrs:{money:"3"}},
-                 {name:"Silver",deck:"dominion",quantity:20,picture:"",type:"coin",cost:3,attrs:{money:"2"}},
-                 {name:"Copper",deck:"dominion",quantity:20,picture:"",type:"coin",cost:0,attrs:{money:"1"}},
-                 {name:"Curse",deck:"dominion",quantity:10,picture:"",type:"victory",cost:0,attrs:{victory:"-1"}},
+                  {name:"Province",deck:"dominion",quantity:8,picture:"",type:["victory"],cost:8,attrs:{victory:"6"}},
+                  {name:"Duchy",deck:"dominion",quantity:8,picture:"",type:["victory"],cost:5,attrs:{victory:"3"}},
+                  {name:"Estate",deck:"dominion",quantity:8,picture:"",type:["victory"],cost:2,attrs:{victory:"1"}},
+                 {name:"Gold",deck:"dominion",quantity:20,picture:"",type:["coin"],cost:6,attrs:{money:"3"}},
+                 {name:"Silver",deck:"dominion",quantity:20,picture:"",type:["coin"],cost:3,attrs:{money:"2"}},
+                 {name:"Copper",deck:"dominion",quantity:20,picture:"",type:["coin"],cost:0,attrs:{money:"1"}},
+                 {name:"Curse",deck:"dominion",quantity:10,picture:"",type:["victory"],cost:0,attrs:{victory:"-1"}},
                  
-                 {name:"Cellar",deck:"dominion",quantity:10,picture:"",type:"action",cost:2,attrs:{action:"1",discard:"*",card:"discard"}},
-                 {name:"Chapel",deck:"dominion",quantity:10,picture:"",type:"action",cost:2,attrs:{trash_other:"<=4"}},
-                 {name:"Village",deck:"dominion",quantity:10,picture:"",type:"action",cost:3,attrs:{card:"1",action:"2"}},
-                 {name:"Woodcutter",deck:"dominion",quantity:10,picture:"",type:"action",cost:3,attrs:{buy:"1",money:"2"}},
-                 {name:"Workshop",deck:"dominion",quantity:10,picture:"",type:"action",cost:3,attrs:{gain_card:"<=4"}},
-                 {name:"Council Room",deck:"dominion",quantity:10,picture:"",type:"action",cost:5,attrs:{card:"4",buy:"1",card_opponents:"1"}},
-                 {name:"Festival",deck:"dominion",quantity:10,picture:"",type:"action",cost:5,attrs:{action:"1",buy:"1",money:"2"}},
-                 {name:"Laboratory",deck:"dominion",quantity:10,picture:"",type:"action",cost:5,attrs:{card:"2",action:"1"}},
-                 {name:"Market",deck:"dominion",quantity:10,picture:"",type:"action",cost:5,attrs:{card:"1",action:"1",money:"1",buy:"1"}},
-                 {name:"Witch",deck:"dominion",quantity:10,picture:"",type:"action",cost:5,attrs:{card:"2",curse_opponents:"1"}},
+                 {name:"Cellar",deck:"dominion",quantity:10,picture:"",type:["action"],cost:2,attrs:{action:"1",discard:"*",variable_card:"discard"}},
+                 {name:"Chapel",deck:"dominion",quantity:10,picture:"",type:["action"],cost:2,attrs:{trash_card_number_under:"5"}},
+                 {name:"Village",deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{card:"1",action:"2"}},
+                 {name:"Woodcutter",deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{buy:"1",money:"2"}},
+                 {name:"Workshop",deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{gain_card_under:"5"}},
+                 {name:"Council Room",deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"4",buy:"1",card_opponents:"1"}},
+                 {name:"Festival",deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{action:"1",buy:"1",money:"2"}},
+                 {name:"Laboratory",deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"2",action:"1"}},
+                 {name:"Market",deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"1",action:"1",money:"1",buy:"1"}},
+                 {name:"Witch",deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"2",curse_opponents:"1"}},
                  ];
 
 /*
+Cellar	Action	$2	+1 Action
+Discard any number of cards.
++1 Card per card discarded.
+Chapel	Action	$2	Trash up to 4 cards from your hand.
 Moat	Action – Reaction	$2	+2 Cards
 When another player plays an Attack card, you may reveal this from your hand. If you do, you are unaffected by that Attack.
 Chancellor	Action	$3	+$2
 You may immediately put your deck into your discard pile.
+Village	Action	$3	+1 Card; +2 Actions.
+Woodcutter	Action	$3	+1 Buy; +$2.
+Workshop	Action	$3	Gain a card costing up to $4.
 Bureaucrat	Action – Attack	$4	Gain a silver card; put it on top of your deck. Each other player reveals a Victory card from his hand and puts it on his deck (or reveals a hand with no Victory cards).
 Feast	Action	$4	Trash this card. Gain a card costing up to $5.
 Gardens	Victory	$4	Worth 1 Victory for every 10 cards in your deck (rounded down).
@@ -63,11 +69,17 @@ Spy	Action – Attack	$4	+1 Card; +1 Action
 Each player (including you) reveals the top card of his deck and either discards it or puts it back, your choice.
 Thief	Action – Attack	$4	Each other player reveals the top 2 cards of his deck. If they revealed any Treasure cards, they trash one of them that you choose. You may gain any or all of these trashed cards. They discard the other revealed cards.
 Throne Room	Action	$4	Choose an Action card in your hand. Play it twice.
-
+Council Room	Action	$5	+4 Cards; +1 Buy
+Each other player draws a card.
+Festival	Action	$5	+2 Actions, +1 Buy; +$2.
+Laboratory	Action	$5	+2 Cards; +1 Action.
 Library	Action	$5	Draw until you have 7 cards in hand. You may set aside any Action cards drawn this way, as you draw them; discard the set aside cards after you finish drawing.
+Market	Action	$5	+1 Card; +1 Action; +1 Buy; +$1.
 Mine	Action	$5	Trash a Treasure card from your hand. Gain a Treasure card costing up to $3 more; put it into your hand.
+Witch	Action – Attack	$5	+2 Cards
 Each other player gains a Curse card.
-Adventurer	Action	$6	Reveal cards from your deck until you reveal 2 Treasure cards. Put those Treasure cards in your hand and discard the other revealed cards. */
+Adventurer	Action	$6	Reveal cards from your deck until you reveal 2 Treasure cards. Put those Treasure cards in your hand and discard the other revealed cards.
+*/
 
 console.log("index.js loaded!");
 
@@ -83,99 +95,6 @@ router.get('/chat', function(req, res) {
 
 router.get('/game', function(req, res) {
     res.sendfile(req.abs_path + '/views/game_index.html');
-});
-
-router.post('/add_quiz', function(req, res) {
-    var db = req.db;
-
-	console.log(req.param('test'));
-	console.log(req.param('genre'));
-
-    var test_name = req.param('test');
-    var test_genre = req.param('genre');
-    
-    var collection = db.get('quiz');
-    collection.insert({name:test_name,genre:test_genre,questions:[]},
-    	function (err, doc) {
-	        if (err) {
-	            res.send("Error");
-	        }
-	        else {
-	            res.send("Success");
-	        }
-    	}
-    );
-});
-
-router.post('/add_question', function(req, res) {
-      var db = req.db;
-
-	  console.log(req.param('test'));
-	  console.log(req.param('question'));
-
-      var test_name = req.param('test');
-      var question_correct = req.param('correct');
-      var question_name = req.param('question');
-      var question_answers = req.param('answers');
-      
-      var question_object = {
-		  question:question_name,
-		  answers:question_answers,
-		  correct:question_correct
-      }
-      
-      console.log(question_object);
-
-      // Set our collection
-      var collection = db.get('quiz');
-      
-      collection.find({name:test_name},{},function(e,docs){
-          	res.setHeader('Content-Type', 'application/json');
-          	console.log(docs[0].questions);
-          	docs[0].questions.push(question_object);
-          	collection.update({name:test_name}, {'$set':{"questions" : docs[0].questions}},function (err, doc) {
-                if (err) {
-                    res.send("Error");
-                }
-                else {
-                	res.send("Success");
-                }
-          	});
-      });
-});
-
-router.post('/delete_question', function(req, res) {
-      var db = req.db;
-
-	  console.log(req.param('test'));
-	  console.log(req.param('question'));
-
-      var test_name = req.param('test');
-      var question_name = req.param('question');
-
-      // Set our collection
-      var collection = db.get('quiz');
-      
-      collection.find({name:test_name},{},function(e,docs){
-          	res.setHeader('Content-Type', 'application/json');
-          	var new_questions = [];
-          	console.log(docs[0]);
-          	console.log(docs[0].questions);
-          	for(var i = 0; i < docs[0].questions.length;i++){
-          		console.log(docs[0].questions[i].question);
-          		if(docs[0].questions[i].question != question_name){
-          			new_questions.push(docs[0].questions[i]);
-          		}
-          	}
-          	collection.update({name:test_name}, {'$set':{"questions" : new_questions}},function (err, doc) {
-                if (err) {
-                    res.send("Error");
-                }
-                else {
-                	res.send("Success");
-                }
-          	});
-      });
 });
 
 router.get('/load', function(req, res) {
@@ -200,19 +119,6 @@ router.get('/users', function(req, res) {
 	console.log(lobby);
 	res.send({users:lobby.people,rooms:game_rooms});
 });
-
-/*
- *  socket.room = name;
-	socket.join(socket.room);
-	people[socket.id].owns = id;
-	people[socket.id].inroom = id;
-	room.addPerson(socket.id);
-	socket.emit("update", "Welcome to " + room.name + ".");
-	socket.emit("sendRoomID", {id: id});
-	chatHistory[socket.room] = [];
- */
-
-//io.sockets.in(socket.room).emit("isTyping", {isTyping: data, person: people[socket.id].name});
 
 router.run_server = function(listener){
 	var server = require('socket.io').listen(listener, function() {
@@ -243,22 +149,74 @@ router.run_server = function(listener){
 	        var db = req.db;
 	        var collection = db.get('card');
 	        var room = find_room(req.session.username);
-	        var player = room.get_user(req.session.username);
-	        //room.pick_first();
-	        //socket.emit('message', { message: 'welcome to the chat' });
+	        //var player = room.get_user(req.session.username);
+
+	        //This call needs to hook to the database. The rest of the calls can just use the stored data
 	        collection.find({},{},function(e,docs){
 	            res.setHeader('Content-Type', 'application/json');
 		        room.create_game(docs);
-		        console.log(room);
-	            res.send({
-	            	first:room.is_first(req.session.username),
-	            	cards:room['cards'],
-	            	deck:player['deck'],
-	            	hand:player['hand'],
-	            	discard:player['discard'],
-	            	stats:player['stats']
-	            });
+		        //console.log(room);
+	            res.send(room.game.game_package(req.session.username));
 	        });
+	    });
+	    
+	    socket.on('increment_turn', function (data) {
+	    	var user = data.name;
+	    	var room = find_room(user);
+	    	var result_message = user + " ends turn";
+	    	
+	    	room.game.next_turn(user);
+	    	
+	    	for(var person in room.game.people){
+    			clients[room['people'][person]['socket']].emit('update',room.game.game_package(room.game['people'][person]['name']));
+    		}
+	    	server.sockets.in(room['name']).emit('message',{ message:result_message });
+	    });
+	    
+	    socket.on('player_buy', function (data) {
+	    	var user = data.name;
+	    	var card = data.card;
+	    	var room = find_room(user);
+	    	var result_message = data.name + " buys " + data.card['name'];
+	    	
+	    	if(room.game.get_user_index(user) == room.game.current_turn && room.game.can_buy_card(user,card)){
+		    	room.game.buy_card(user,card);
+		    	for(var person in room.game.people){
+	    			clients[room['people'][person]['socket']].emit('update',room.game.game_package(room.game['people'][person]['name']));
+	    		}
+		    	server.sockets.in(room['name']).emit('message',{ message:result_message });
+		    	if(room.game.game_over()){
+		    		console.log('Game Over');
+	    			var data = room.game.return_winner();
+	    			var message_string = "<br>The Game is Over<br>Winner: " + data['winner'] + data['user_meta'];
+		    		server.sockets.in(room['name']).emit('message',{ message:message_string});
+		    		server.sockets.in(room['name']).emit('end_game', {});
+		    	}else{
+		    		console.log('Game Not Over');
+		    	}
+	    	}
+	    });
+	    
+	    socket.on('player_use', function (data) {
+	    	var user = data.name;
+	    	var room = find_room(user);
+	    	var card = data.card;
+	    	var result_message = data.name + " plays " + card['name'];
+	    	
+	    	if(room.game.get_user_index(user) == room.game.current_turn && room.game.card_action_check(user,card)){
+	    		room.game.use_card(user,card);
+	    		for(var person in room.game.people){
+	    			clients[room['people'][person]['socket']].emit('update',room.game.game_package(room.game['people'][person]['name']));
+	    		}
+	    		server.sockets.in(room['name']).emit('message',{ message:result_message });
+	    		if(room.game.game_over()){
+	    			console.log('Game Over');
+	    			var data = room.game.return_winner();
+	    			var message_string = "<br>The Game is Over<br>Winner: " + data['winner'] + data['user_meta'];
+		    		server.sockets.in(room['name']).emit('message',{ message:message_string});
+		    		server.sockets.in(room['name']).emit('end_game', {});
+		    	}
+	    	}
 	    });
 	    
 		router.post('/create_room', function(req, res) {
@@ -355,6 +313,46 @@ router.run_server = function(listener){
 			res.send({name : req.session.username});
 		});
 		
+		//socket.emit('exit_game',{ name:$scope.username });
+		socket.on('exit_game', function (data) {
+			var user_name = data.name;
+			var room = find_room(user_name);
+			var user_index = room.get_user_index(user_name);
+			
+			//Send message to players that current player has left
+			server.sockets.in(room['name']).emit('message',{ message:user_name + ' has left the game!' });
+			//Iterate the turn up one if it was the user's turn
+			if(room.game.get_user_index(user_name) == room.game.current_turn){
+				room.game.next_turn(user_name);
+			}
+			//Remove the player from the room
+			//lobby.add_user(user_name,socket.id);
+			room['people'].splice(user_index, 1);
+
+			switch(room['people'].length){
+				//If there are no more people in the room
+				case 0:remove_room(room['id']);break;
+				case 1:
+					if(!room['game']['game_ended']){
+						var data = room.game.return_winner();
+		    			var message_string = "<br>The Game is Over<br>Winner: " + data['winner'] + data['user_meta'];
+			    		server.sockets.in(room['name']).emit('message',{ message:message_string});
+			    		server.sockets.in(room['name']).emit('end_game', {});
+					}
+					break;
+				default:break;
+			}
+			//end game
+			//notify players that someone has left
+			//splice leaving player from room
+			//destroy room if nobody is left in it
+			//add player to lobby
+			
+			//TODO: take player out of lobby when they join game
+			//TODO: make sure that the player can't restart the game by refreshing browser
+			//TODO: make sure that the player is redirected to the correct room if they try to join the lobby again after starting a game
+	    });
+		
 		socket.on('enter_game', function (data) {
 			console.log('Current Socket');
 			console.log(socket.id);
@@ -405,6 +403,16 @@ function find_room(user){
 		}
 	}
 	return null;
+}
+
+function remove_room(id){
+	var room_index = -1;
+	for(var room in game_rooms){
+		if(game_rooms[room]['id'] == id){
+			room_index = room;
+		}
+	}
+	game_rooms.splice(room_index, 1);
 }
 
 module.exports = router;
