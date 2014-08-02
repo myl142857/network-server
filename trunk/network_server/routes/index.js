@@ -25,38 +25,35 @@ var games = {};
 var clients = [];*/
 
 var card_meta = [ 
-                  {name:"Province",deck:"dominion",quantity:8,picture:"",type:["victory"],cost:8,attrs:{victory:"6"}},
-                  {name:"Duchy",deck:"dominion",quantity:8,picture:"",type:["victory"],cost:5,attrs:{victory:"3"}},
-                  {name:"Estate",deck:"dominion",quantity:8,picture:"",type:["victory"],cost:2,attrs:{victory:"1"}},
-                 {name:"Gold",deck:"dominion",quantity:20,picture:"",type:["coin"],cost:6,attrs:{money:"3"}},
-                 {name:"Silver",deck:"dominion",quantity:20,picture:"",type:["coin"],cost:3,attrs:{money:"2"}},
-                 {name:"Copper",deck:"dominion",quantity:20,picture:"",type:["coin"],cost:0,attrs:{money:"1"}},
-                 {name:"Curse",deck:"dominion",quantity:10,picture:"",type:["victory"],cost:0,attrs:{victory:"-1"}},
+                  {name:"Province",avail:true,deck:"dominion",quantity:8,picture:"",type:["victory"],cost:8,attrs:{victory:"6"}},
+                  {name:"Duchy",avail:true,deck:"dominion",quantity:8,picture:"",type:["victory"],cost:5,attrs:{victory:"3"}},
+                  {name:"Estate",avail:true,deck:"dominion",quantity:8,picture:"",type:["victory"],cost:2,attrs:{victory:"1"}},
+                 {name:"Gold",avail:true,deck:"dominion",quantity:20,picture:"",type:["coin"],cost:6,attrs:{money:"3"}},
+                 {name:"Silver",avail:true,deck:"dominion",quantity:20,picture:"",type:["coin"],cost:3,attrs:{money:"2"}},
+                 {name:"Copper",avail:true,deck:"dominion",quantity:20,picture:"",type:["coin"],cost:0,attrs:{money:"1"}},
+                 {name:"Curse",avail:true,deck:"dominion",quantity:10,picture:"",type:["victory"],cost:0,attrs:{victory:"-1"}},
                  
-                 {name:"Cellar",deck:"dominion",quantity:10,picture:"",type:["action"],cost:2,attrs:{action:"1",discard:"*",variable_card:"discard"}},
-                 {name:"Chapel",deck:"dominion",quantity:10,picture:"",type:["action"],cost:2,attrs:{trash_card_number_under:"5"}},
-                 {name:"Village",deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{card:"1",action:"2"}},
-                 {name:"Woodcutter",deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{buy:"1",money:"2"}},
-                 {name:"Workshop",deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{gain_card_under:"5"}},
-                 {name:"Council Room",deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"4",buy:"1",card_opponents:"1"}},
-                 {name:"Festival",deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{action:"1",buy:"1",money:"2"}},
-                 {name:"Laboratory",deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"2",action:"1"}},
-                 {name:"Market",deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"1",action:"1",money:"1",buy:"1"}},
-                 {name:"Witch",deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"2",curse_opponents:"1"}},
+                 {name:"Cellar",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:2,attrs:{action:"1",discard:"*",variable_card:"discard"}},
+                 {name:"Chapel",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:2,attrs:{trash_under:"4"}},
+                 {name:"Village",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{card:"1",action:"2"}},
+                 {name:"Woodcutter",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{buy:"1",money:"2"}},
+                 {name:"Workshop",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{gain_card:"4"}},
+                 {name:"Smithy",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:4,attrs:{card:"3"}},
+                 {name:"Council Room",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"4",buy:"1",card_opponents:"1"}},
+                 {name:"Festival",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{action:"1",buy:"1",money:"2"}},
+                 {name:"Laboratory",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"2",action:"1"}},
+                 {name:"Market",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"1",action:"1",money:"1",buy:"1"}},
+                 {name:"Witch",avail:false,deck:"dominion",quantity:10,picture:"",type:["action","attack"],cost:5,attrs:{card:"2",curse_opponents:"1"}},
                  ];
 
 /*
 Cellar	Action	$2	+1 Action
 Discard any number of cards.
 +1 Card per card discarded.
-Chapel	Action	$2	Trash up to 4 cards from your hand.
 Moat	Action – Reaction	$2	+2 Cards
 When another player plays an Attack card, you may reveal this from your hand. If you do, you are unaffected by that Attack.
 Chancellor	Action	$3	+$2
 You may immediately put your deck into your discard pile.
-Village	Action	$3	+1 Card; +2 Actions.
-Woodcutter	Action	$3	+1 Buy; +$2.
-Workshop	Action	$3	Gain a card costing up to $4.
 Bureaucrat	Action – Attack	$4	Gain a silver card; put it on top of your deck. Each other player reveals a Victory card from his hand and puts it on his deck (or reveals a hand with no Victory cards).
 Feast	Action	$4	Trash this card. Gain a card costing up to $5.
 Gardens	Victory	$4	Worth 1 Victory for every 10 cards in your deck (rounded down).
@@ -64,20 +61,12 @@ Militia	Action – Attack	$4	+$2
 Each other player discards down to 3 cards in his hand.
 Moneylender	Action	$4	Trash a Copper from your hand. If you do, +$3.
 Remodel	Action	$4	Trash a card from your hand. Gain a card costing up to $2 more than the trashed card.
-Smithy	Action	$4	+3 Cards.
 Spy	Action – Attack	$4	+1 Card; +1 Action
 Each player (including you) reveals the top card of his deck and either discards it or puts it back, your choice.
 Thief	Action – Attack	$4	Each other player reveals the top 2 cards of his deck. If they revealed any Treasure cards, they trash one of them that you choose. You may gain any or all of these trashed cards. They discard the other revealed cards.
 Throne Room	Action	$4	Choose an Action card in your hand. Play it twice.
-Council Room	Action	$5	+4 Cards; +1 Buy
-Each other player draws a card.
-Festival	Action	$5	+2 Actions, +1 Buy; +$2.
-Laboratory	Action	$5	+2 Cards; +1 Action.
 Library	Action	$5	Draw until you have 7 cards in hand. You may set aside any Action cards drawn this way, as you draw them; discard the set aside cards after you finish drawing.
-Market	Action	$5	+1 Card; +1 Action; +1 Buy; +$1.
 Mine	Action	$5	Trash a Treasure card from your hand. Gain a Treasure card costing up to $3 more; put it into your hand.
-Witch	Action – Attack	$5	+2 Cards
-Each other player gains a Curse card.
 Adventurer	Action	$6	Reveal cards from your deck until you reveal 2 Treasure cards. Put those Treasure cards in your hand and discard the other revealed cards.
 */
 
@@ -173,6 +162,47 @@ router.run_server = function(listener){
 	    	server.sockets.in(room['name']).emit('message',{ message:result_message });
 	    });
 	    
+	    //card_decision_made
+	    socket.on('card_decision_made', function (data) {
+	    	var user = data.name;
+	    	var cards = data.cards;
+	    	var room = find_room(user);
+	    	var user_index = room.game.get_user_index(user);
+	    	var result_message = "";
+	    	
+	    	console.log('Received decision');
+	    	if(room.game.player_decision_check(user)){
+	    		console.log('Decision valid');
+	    		//There needs to be a decision check here
+	    		if(data.action == "trash"){
+		    		result_message = room.game.trash_cards(user,cards);
+	    		}
+	    		if(data.action == "gain_card"){
+	    			result_message = room.game.gain_cards(user,cards);
+	    		}
+	    		room.game['people'][user_index]['game']['extra_actions'] = [];
+	    		
+	    		console.log('Extra actions');
+	    		console.log(room.game['people'][user_index]['game']);
+	    		
+	    		for(var person in room.game.people){
+	    			clients[room['people'][person]['socket']].emit('update',room.game.game_package(room.game['people'][person]['name']));
+	    		}
+	    		for(var message in result_message){
+		    		server.sockets.in(room['name']).emit('message',{ message: result_message[message] });
+	    		}
+		    	if(room.game.game_over()){
+		    		console.log('Game Over');
+	    			var data = room.game.return_winner();
+	    			var message_string = "<br>The Game is Over<br>Winner: " + data['winner'] + data['user_meta'];
+		    		server.sockets.in(room['name']).emit('message',{ message:message_string});
+		    		server.sockets.in(room['name']).emit('end_game', {});
+		    	}else{
+		    		console.log('Game Not Over');
+		    	}
+		    }
+	    });
+	    
 	    socket.on('player_buy', function (data) {
 	    	var user = data.name;
 	    	var card = data.card;
@@ -202,9 +232,10 @@ router.run_server = function(listener){
 	    	var room = find_room(user);
 	    	var card = data.card;
 	    	var result_message = data.name + " plays " + card['name'];
+	    	var user_index = room.game.get_user_index(user);
 	    	
-	    	if(room.game.get_user_index(user) == room.game.current_turn && room.game.card_action_check(user,card)){
-	    		room.game.use_card(user,card);
+	    	if(user_index == room.game.current_turn && room.game.card_action_check(user,card)){
+	    		var extra_actions = room.game.use_card(user,card);
 	    		for(var person in room.game.people){
 	    			clients[room['people'][person]['socket']].emit('update',room.game.game_package(room.game['people'][person]['name']));
 	    		}

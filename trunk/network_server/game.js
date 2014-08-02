@@ -16,13 +16,32 @@ function Player_Data(){
 	this.discard = [];
 	this.used = [];
 	this.hand = [];
+	this.trash = [];
+	this.extra_actions = [];
 	this.stats = {turn:0,action:0,buy:0,money:0};
+}
+
+Game.prototype.return_gamedeck = function(cards){
+	var end_cards = [];
+	var buyables = [];
+	for(var card in cards){
+		if(!cards[card]['avail']){
+			if(buyables.length<11){
+				buyables.push(cards[card]);
+			}
+		}else{
+			end_cards.push(cards[card]);
+		}
+	}
+	return end_cards.concat(buyables);
 }
 
 Game.prototype.create_game = function(cards){
 	//this.pick_first();
+	cards = this.return_gamedeck(this.shuffle(cards));
 	for(var card in cards) {
 		cards[card]['current_quantity'] = cards[card]['quantity'];
+		cards[card]['selected'] = false;
 		//Now we have to create the descriptions for the cards
 		var description = [];
 		
@@ -50,6 +69,12 @@ Game.prototype.create_game = function(cards){
 			if(action === 'curse_opponents'){
 				description.push("+" + cards[card]['attrs']['curse_opponents'] + " Curse(s) Opponent(s)");
 			}
+			if(action === 'trash_under'){
+				description.push("Trash up to " + cards[card]['attrs']['trash_under'] + " Card(s)");
+			}
+			if(action === 'gain_card'){
+				description.push("Gain card up to $" + cards[card]['attrs']['gain_card']);
+			}
 		}
 		cards[card]['description'] = description;
   	}
@@ -60,6 +85,8 @@ Game.prototype.create_game = function(cards){
 		this.people[person]['game']['hand'] = this.draw_starting_hand(this.people[person]);
 		this.people[person]['game']['discard'] = [];
 		this.people[person]['game']['used'] = [];
+		this.people[person]['game']['trash'] = [];
+		this.people[person]['game']['extra_actions'] = [];
 	}
 }
 
@@ -123,7 +150,46 @@ Game.prototype.format_meta = function(meta){
 	return stringy;
 }
 
+Game.prototype.trash_cards = function(user,cards){
+	var message = [];
+	var person = this.get_user(user);
+	for(var card in cards){
+		//console.log('About to trash card index: ' + card);
+		//console.log(cards[card]);
+		var card_index = this.find_card(cards[card]['name'],this.cards);
+		//console.log('About to trash card index: ' + card_index);
+		var hand_index = person['game']['hand'].indexOf(card_index);
+		//console.log('About to trash hand index: ' + hand_index);
+		if(hand_index != -1){
+			person['game']['trash'].push(person['game']['hand'][hand_index]);
+			person['game']['hand'].splice(hand_index, 1);
+			message.push( person['name'] + " trashes " + this.cards[card_index]['name'] );
+		}
+	}
+	return message;
+}
+
+Game.prototype.gain_cards = function(user,cards){
+	var message = [];
+	var person = this.get_user(user);
+	for(var card in cards){
+		var card_index = this.find_card(cards[card]['name'],this.cards);
+		//var hand_index = person['game']['hand'].indexOf(card_index);
+		if(card_index != -1){
+			person['game']['used'].push(card_index);
+			this.cards[card_index]['current_quantity']--;
+
+			message.push( person['name'] + " gains a " + this.cards[card_index]['name'] );
+		}
+	}
+	return message;
+}
+
 Game.prototype.use_card = function(user,card){
+	
+	//These are the things that a player can do after playing a card
+	//Such as trashing other cards or making decisions
+	extra_actions = [];
 	var person = this.get_user(user);
 	
 	var card_index = this.find_card(card['name'],this.cards);
@@ -180,7 +246,27 @@ Game.prototype.use_card = function(user,card){
 				}
 			}
 		}
+		if(action === 'trash_under'){
+			person['game']['extra_actions'].push({action:'trash_under',value:'4',general:'trash'});
+		}
+		if(action === 'gain_card'){
+			person['game']['extra_actions'].push({action:'gain_card',value:'4',general:'gain'});
+		}
 	}
+}
+
+Game.prototype.player_decision_check = function(user_name){
+	var person = this.get_user(user_name);
+	console.log(person['game']['extra_actions']);
+	for(var actions in person['game']['extra_actions']){
+		if(person['game']['extra_actions'][actions]['general'] == 'gain'){
+			return true;
+		}
+		if(person['game']['extra_actions'][actions]['general'] == 'trash'){
+			return true;
+		}
+	}
+	return false;
 }
 
 Game.prototype.card_action_check = function(user_name,card){
@@ -220,7 +306,7 @@ Game.prototype.buy_card = function(user,raw_card){
 	
 	//if(card['cost'] <= person['game']['stats']['money'] && card['current_quantity'] > 0 && person['game']['stats']['buy'] > 0){
 	person['game']['stats']['money'] -= card['cost'];
-	person['game']['discard'].push(card_index);
+	person['game']['used'].push(card_index);
 	person['game']['stats']['buy']--;
 	this.cards[card_index]['current_quantity']--;
 	//}
@@ -243,7 +329,8 @@ Game.prototype.game_package = function(user){
     	deck:player['game']['deck'],
     	hand:player['game']['hand'],
     	discard:player['game']['discard'],
-    	stats:player['game']['stats']
+    	stats:player['game']['stats'],
+    	actions:player['game']['extra_actions']
     };
 }
 
@@ -318,7 +405,7 @@ Game.prototype.get_starting_deck = function(cards){
 				 deck.push(card);
 			 }
 		 }*/
-		 if(cards[card]['name'] == "Council Room"){
+		 if(cards[card]['name'] == "Chapel"){
 			 for(var i = 0; i < 3; i++){
 				 deck.push(card);
 			 }

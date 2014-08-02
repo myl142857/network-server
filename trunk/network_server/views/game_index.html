@@ -21,12 +21,19 @@
 		
 		.action_container				{ display: table; width:100%; float:left; }
 		.action_container div			{ margin:1%; }
+		
 		.buy_container					{ display: table-cell; height:100%; width:25%; float:left; }
 		.log_container					{ display: table-cell; height:100%; width:40%; float:left; }
 		.victory_container				{ display: table-cell; height:100%; width:25%; float:left; }
+		
 		.stat_container					{ display: table-cell; height:100%; width:15%; float:left; }
 		.hand_container					{ display: table-cell; height:100%; width:60%; float:left; }
 		.deck_container					{ display: table-cell; height:100%; width:15%; float:left; }
+		
+		.hand_title_div					{ width:10%; float:left; }
+		.info_div						{ text-align:center; width:60%; float:left; }
+		.decision_div					{ width:20%; float:left; }
+		
 		.card_div						{ padding:5px; cursor:pointer; }
 		.stat_label						{ width:100% }
 		
@@ -34,7 +41,8 @@
 		.icon_div div					{ }
 		.coin_icon, .card_icon			{ height:15px; width:15px; margin-right:5px;}
 		.restricted						{ background-color:#B00000 }
-		.invisible						{ display:none }
+		.selected						{ background-color:#FA9A50 }
+		.invisible						{ visibility: hidden }
 		
 		.useable_card					{ width:150px; height:50px; float:left; text-align:center; padding-top:10px }
 		.hover_div 						{ position: relative; }
@@ -51,7 +59,7 @@
 	<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script><!-- load jquery -->
 	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.8/angular.min.js"></script><!-- load angular -->
 	<script src="/javascripts/game_core.js"></script>
-	<script src="/javascripts/game_actions.js"></script>
+	<script src="/javascripts/decision_actions.js"></script>
 	<script src="/javascripts/global.js"></script>
 	<script src="/javascripts/services.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
@@ -62,8 +70,8 @@
 	<div class="game_container">
 		<div class="action_container" style="height:60%">
 		<div class="well buy_container">
-		    <div class="buy_div" ng-repeat="card in filterCards(cards,'type',['action'])">
-		    	<div class="well card_div hover_div" ng-click="buy_card(card)"> {{ card.name }} 
+		    <div class="buy_div" ng-repeat="card in filterCards(cards,'type',['action']) | orderBy:sort_cost:true">
+		    	<div ng-class="{selected: card.selected}" class="well card_div hover_div" ng-click="buy_card(card)"> {{ card.name }} 
 		    		<div class="icon_div">
 			    			<img class="coin_icon" src="/images/coin_icon.png"/> {{ card.cost }} 
 			    			<img class="card_icon" src="/images/card_icon.png"/>{{ card.current_quantity }} 
@@ -88,8 +96,8 @@
 			</div>
 		</div>
 		<div class="well victory_container">
-		    <div class="victory_div" ng-repeat="card in filterCards(cards,'type',['coin','victory'])">
-		    	<div class="well card_div hover_div" ng-click="buy_card(card)"> {{ card.name }} 
+		    <div class="victory_div" ng-repeat="card in filterCards(cards,'type',['coin','victory']).slice().reverse() | orderBy:sort_cost:true">
+		    	<div ng-class="{selected: card.selected}" class="well card_div hover_div" ng-click="buy_card(card)"> {{ card.name }} 
 		    		<div class="icon_div">
 			    			<img class="coin_icon" src="/images/coin_icon.png"/> {{ card.cost }} 
 			    			<img class="card_icon" src="/images/card_icon.png"/>{{ card.current_quantity }} 
@@ -125,10 +133,14 @@
 			<div class="hand_container well">
 				<div class="" style="float:left;width:100%;">
 					<div class="hand_label" style="height:20px">
-						<b> Hand </b>
+						<div class="hand_title_div"><b> Hand </b></div>
+						<div class="info_div"> {{ decision_info }}</div>
+						<div class="decision_div">
+							<button ng-class="{invisible: !decision}" class="decision_button" type="button" ng-click="make_decision()" style="margin-top:10px">Done</button>
+						</div>
 					</div>
 					<div class="hand_div" ng-repeat="card in hand">
-						<div ng-class="{restricted: !player_turn}" class="hover_div well card_div useable_card" ng-click="use_card(card)"> {{ card.name }} 
+						<div ng-class="{restricted: !player_turn, selected: card.selected}" class="hover_div well card_div useable_card" ng-click="use_card(card)"> {{ card.name }} 
 							<div class="big_img_right_closer well"><b>{{ card.name }}</b><br>
 				    			<div ng-repeat="attr in card.description"> 
 				    				{{ attr }} <br>
