@@ -25,20 +25,23 @@ var games = {};
 var clients = [];*/
 
 var card_meta = [ 
-                  {name:"Province",avail:true,deck:"dominion",quantity:8,picture:"",type:["victory"],cost:8,attrs:{victory:"6"}},
+                 //These cards are always available
+                  {name:"Province",avail:true,deck:"dominion",quantity:1,picture:"",type:["victory"],cost:8,attrs:{victory:"6"}},
                   {name:"Duchy",avail:true,deck:"dominion",quantity:8,picture:"",type:["victory"],cost:5,attrs:{victory:"3"}},
                   {name:"Estate",avail:true,deck:"dominion",quantity:8,picture:"",type:["victory"],cost:2,attrs:{victory:"1"}},
                  {name:"Gold",avail:true,deck:"dominion",quantity:20,picture:"",type:["coin"],cost:6,attrs:{money:"3"}},
                  {name:"Silver",avail:true,deck:"dominion",quantity:20,picture:"",type:["coin"],cost:3,attrs:{money:"2"}},
                  {name:"Copper",avail:true,deck:"dominion",quantity:20,picture:"",type:["coin"],cost:0,attrs:{money:"1"}},
-                 {name:"Curse",avail:true,deck:"dominion",quantity:10,picture:"",type:["victory"],cost:0,attrs:{victory:"-1"}},
+                 {name:"Curse",avail:true,deck:"dominion",quantity:10,picture:"",type:["curse","victory"],cost:0,attrs:{victory:"-1"}},
                  
-                 {name:"Cellar",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:2,attrs:{action:"1",discard:"*",variable_card:"discard"}},
+                 //These cards are picked from
+                 {name:"Cellar",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:2,attrs:{action:"1",discard:"*",discard_actions:{cards:"discard"}}},
                  {name:"Chapel",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:2,attrs:{trash_under:"4"}},
                  {name:"Village",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{card:"1",action:"2"}},
                  {name:"Woodcutter",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{buy:"1",money:"2"}},
                  {name:"Workshop",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{gain_card:"4"}},
                  {name:"Smithy",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:4,attrs:{card:"3"}},
+                 {name:"Militia",avail:false,deck:"dominion",quantity:10,picture:"",type:["action","attack"],cost:4,attrs:{money:"2",discard:"*",discard_actions:{card_opponents_under:"3"}}},
                  {name:"Council Room",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"4",buy:"1",card_opponents:"1"}},
                  {name:"Festival",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{action:"1",buy:"1",money:"2"}},
                  {name:"Laboratory",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"2",action:"1"}},
@@ -47,9 +50,6 @@ var card_meta = [
                  ];
 
 /*
-Cellar	Action	$2	+1 Action
-Discard any number of cards.
-+1 Card per card discarded.
 Moat	Action – Reaction	$2	+2 Cards
 When another player plays an Attack card, you may reveal this from your hand. If you do, you are unaffected by that Attack.
 Chancellor	Action	$3	+$2
@@ -180,7 +180,24 @@ router.run_server = function(listener){
 	    		if(data.action == "gain_card"){
 	    			result_message = room.game.gain_cards(user,cards);
 	    		}
+	    		if(data.action == "discard_draw"){
+	    			result_message = room.game.discard_draw(user,cards);
+	    		}
+	    		if(data.action == "discard_down_to"){
+	    			result_message = room.game.discard(user,cards);
+	    		}
 	    		room.game['people'][user_index]['game']['extra_actions'] = [];
+	    		
+	    		var still_waiting = false;
+	    		for(var person in room.game.people){
+	    			if(person!=room.game.current_turn && room.game.people[person]['game']['extra_actions'].length>0){
+	    				still_waiting = true;
+	    			}
+	    		}
+	    		if(!still_waiting){
+	    			room.game['people'][room.game.current_turn]['game']['extra_actions'] = [];
+	    		}
+	    		//user_index == room.game.current_turn
 	    		
 	    		console.log('Extra actions');
 	    		console.log(room.game['people'][user_index]['game']);
@@ -193,12 +210,13 @@ router.run_server = function(listener){
 	    		}
 		    	if(room.game.game_over()){
 		    		console.log('Game Over');
+		    		console.log(room.game.game_ended);
 	    			var data = room.game.return_winner();
 	    			var message_string = "<br>The Game is Over<br>Winner: " + data['winner'] + data['user_meta'];
 		    		server.sockets.in(room['name']).emit('message',{ message:message_string});
-		    		server.sockets.in(room['name']).emit('end_game', {});
-		    	}else{
-		    		console.log('Game Not Over');
+		    		for(var person in room.game.people){
+		    			clients[room['people'][person]['socket']].emit('update',room.game.game_package(room.game['people'][person]['name']));
+		    		}
 		    	}
 		    }
 	    });
@@ -217,12 +235,13 @@ router.run_server = function(listener){
 		    	server.sockets.in(room['name']).emit('message',{ message:result_message });
 		    	if(room.game.game_over()){
 		    		console.log('Game Over');
+		    		console.log(room.game.game_ended);
 	    			var data = room.game.return_winner();
 	    			var message_string = "<br>The Game is Over<br>Winner: " + data['winner'] + data['user_meta'];
 		    		server.sockets.in(room['name']).emit('message',{ message:message_string});
-		    		server.sockets.in(room['name']).emit('end_game', {});
-		    	}else{
-		    		console.log('Game Not Over');
+		    		for(var person in room.game.people){
+		    			clients[room['people'][person]['socket']].emit('update',room.game.game_package(room.game['people'][person]['name']));
+		    		}
 		    	}
 	    	}
 	    });
@@ -242,10 +261,13 @@ router.run_server = function(listener){
 	    		server.sockets.in(room['name']).emit('message',{ message:result_message });
 	    		if(room.game.game_over()){
 	    			console.log('Game Over');
+		    		console.log(room.game.game_ended);
 	    			var data = room.game.return_winner();
 	    			var message_string = "<br>The Game is Over<br>Winner: " + data['winner'] + data['user_meta'];
 		    		server.sockets.in(room['name']).emit('message',{ message:message_string});
-		    		server.sockets.in(room['name']).emit('end_game', {});
+		    		for(var person in room.game.people){
+		    			clients[room['people'][person]['socket']].emit('update',room.game.game_package(room.game['people'][person]['name']));
+		    		}
 		    	}
 	    	}
 	    });

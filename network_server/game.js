@@ -75,6 +75,35 @@ Game.prototype.create_game = function(cards){
 			if(action === 'gain_card'){
 				description.push("Gain card up to $" + cards[card]['attrs']['gain_card']);
 			}
+			if(action === 'discard'){
+				if(cards[card]['attrs']['discard'] == '*'){
+					//for(var discard_actions in card['attrs']['discard_action']){
+					console.log(cards[card]['attrs']);
+					console.log(cards[card]['attrs']['discard_actions']);
+						if(cards[card]['attrs']['discard_actions']['cards'] != undefined){
+							if(cards[card]['attrs']['discard_actions']['cards'] === 'discard'){
+								description.push("Discard any number of cards");
+								description.push("+Cards equal to cards discarded");
+							}else{
+								//person['game']['extra_actions'].push({action:'discard_draw',value:cards[card]['attrs']['discard_action']['cards'],general:'discard'});
+							}
+						}
+						if(cards[card]['attrs']['discard_actions']['card_opponents_under'] != undefined){
+							description.push("Other players discard down to " + cards[card]['attrs']['discard_actions']['card_opponents_under'] + " cards");
+							//for(var player in this.people){
+							//	if(this.people[player] != person){
+							//		description.push("Other players discard down to " + cards[card]['attrs']['discard_actions']['card_opponents_under'] + " cards");
+									//All players have to discard down to value
+									//this.people[player]['game']['extra_actions'].push({action:'discard_down_to',value:cards[card]['attrs']['discard_action']['card_opponents_under'],general:'discard'});
+							//	}else{
+									//The attacking player has to wait until the other players discard
+									//this.people[player]['game']['extra_actions'].push({action:'wait_others',value:'*',general:'waiting'});
+							//	}
+							//}
+						}
+					//}
+				}
+			}
 		}
 		cards[card]['description'] = description;
   	}
@@ -90,8 +119,21 @@ Game.prototype.create_game = function(cards){
 	}
 }
 
+Game.prototype.empty_piles = function(){
+	var empty_piles = 0;
+	for(var card in this.cards){
+		if(this.cards[card]['current_quantity']<1){
+			empty_piles++;
+		}
+	}
+	return empty_piles;
+}
+
 Game.prototype.game_over = function(){
-	if (1 > this.cards[this.find_card('Province',this.cards)]['current_quantity'] || this.game_ended){
+	//If there are 3 or more empty piles, no province cards, or a player ended the game prematurely
+	if (2 < this.empty_piles() || 1 > this.cards[this.find_card('Province',this.cards)]['current_quantity'] || this.game_ended){
+		console.log('Game ended');
+		this.game_ended = true;
 		return true;
 	}
 	return false;
@@ -115,6 +157,9 @@ Game.prototype.return_winner = function(){
 		while(this.people[person]['game']['discard'].length > 0){
 			this.people[person]['game']['deck'].push(this.people[person]['game']['discard'].pop());
 		}
+		while(this.people[person]['game']['used'].length > 0){
+			this.people[person]['game']['deck'].push(this.people[person]['game']['used'].pop());
+		}
 		console.log('Parsing cards');
 		this.people[person]['game']['points'] = 0;
 		for(var card in this.people[person]['game']['deck']){
@@ -125,9 +170,9 @@ Game.prototype.return_winner = function(){
 	var winner = this.people[0];
 	console.log('Winner');
 	console.log(winner);
-	var user_meta = [{name:winner['name'],points:winner['game']['points']}];
-	for(var i = 1; i < this.people; i++){
-		user_meta.push({name:this.people[i]['name'],points:this.people[i]['game']['points']});
+	var user_meta = [{name:winner['name'],points:winner['game']['points'],cards:winner['game']['deck'].length}];
+	for(var i = 1; i < this.people.length; i++){
+		user_meta.push({name:this.people[i]['name'],points:this.people[i]['game']['points'],cards:this.people[i]['game']['deck'].length});
 		if(this.people[i]['game']['points'] > winner['game']['points']){
 			winner = this.people[i];
 		}else if(this.people[i]['game']['points'] == winner['game']['points']){
@@ -143,11 +188,48 @@ Game.prototype.return_winner = function(){
 Game.prototype.format_meta = function(meta){
 	var stringy = "<br>";
 	
+	console.log(meta);
 	for(var user in meta){
-		stringy += "<p>" + meta[user]['name'] + ": points=>" + meta[user]['points'];
+		stringy += meta[user]['name'] + ": points=" + meta[user]['points'] + ": cards=" + meta[user]['cards'] + "<p>";
 	}
 	
 	return stringy;
+}
+
+Game.prototype.discard = function(user,cards){
+	var message = [];
+	var person = this.get_user(user);
+	var discarded = 0;
+	for(var card in cards){
+		var card_index = this.find_card(cards[card]['name'],this.cards);
+		var hand_index = person['game']['hand'].indexOf(card_index);
+		if(hand_index != -1){
+			person['game']['used'].push(person['game']['hand'][hand_index]);
+			person['game']['hand'].splice(hand_index, 1);
+			discarded++;
+		}
+	}
+	//person['game']['hand'] = person['game']['hand'].concat(this.draw_hand(person,parseInt(discarded,10)));
+	message.push( person['name'] + " discards " + discarded + " cards" );
+	return message;
+}
+
+Game.prototype.discard_draw = function(user,cards){
+	var message = [];
+	var person = this.get_user(user);
+	var discarded = 0;
+	for(var card in cards){
+		var card_index = this.find_card(cards[card]['name'],this.cards);
+		var hand_index = person['game']['hand'].indexOf(card_index);
+		if(hand_index != -1){
+			person['game']['used'].push(person['game']['hand'][hand_index]);
+			person['game']['hand'].splice(hand_index, 1);
+			discarded++;
+		}
+	}
+	person['game']['hand'] = person['game']['hand'].concat(this.draw_hand(person,parseInt(discarded,10)));
+	message.push( person['name'] + " discards and draws " + discarded + " cards" );
+	return message;
 }
 
 Game.prototype.trash_cards = function(user,cards){
@@ -252,6 +334,35 @@ Game.prototype.use_card = function(user,card){
 		if(action === 'gain_card'){
 			person['game']['extra_actions'].push({action:'gain_card',value:'4',general:'gain'});
 		}
+		if(action === 'discard'){
+			if(card['attrs']['discard'] == '*'){
+				//for(var discard_actions in card['attrs']['discard_action']){
+					if(card['attrs']['discard_actions']['cards'] != undefined){
+						if(card['attrs']['discard_actions']['cards'] === 'discard'){
+							person['game']['extra_actions'].push({action:'discard_draw',value:'*',general:'discard'});
+						}else{
+							person['game']['extra_actions'].push({action:'discard_draw',value:card['attrs']['discard_actions']['cards'],general:'discard'});
+						}
+					}
+					if(card['attrs']['discard_actions']['card_opponents_under'] != undefined){
+						var people_need_to_discard = false;
+						for(var player in this.people){
+							if(this.people[player] != person){
+								//All players have to discard down to value
+								if(parseInt(card['attrs']['discard_actions']['card_opponents_under'],10) < this.people[player]['game']['hand'].length){
+									people_need_to_discard = true;
+									this.people[player]['game']['extra_actions'].push({action:'discard_down_to',value:card['attrs']['discard_actions']['card_opponents_under'],general:'discard'});
+								}
+							}
+						}
+						if(people_need_to_discard){
+							//The attacking player has to wait until the other players discard
+							person['game']['extra_actions'].push({action:'wait_others',value:'*',general:'waiting'});
+						}
+					}
+				//}
+			}
+		}
 	}
 }
 
@@ -263,6 +374,9 @@ Game.prototype.player_decision_check = function(user_name){
 			return true;
 		}
 		if(person['game']['extra_actions'][actions]['general'] == 'trash'){
+			return true;
+		}
+		if(person['game']['extra_actions'][actions]['general'] == 'discard'){
 			return true;
 		}
 	}
@@ -330,7 +444,8 @@ Game.prototype.game_package = function(user){
     	hand:player['game']['hand'],
     	discard:player['game']['discard'],
     	stats:player['game']['stats'],
-    	actions:player['game']['extra_actions']
+    	actions:player['game']['extra_actions'],
+    	game_over:this.game_ended
     };
 }
 
@@ -400,16 +515,16 @@ Game.prototype.reset_stats = function(person){
 Game.prototype.get_starting_deck = function(cards){
 	var deck = [];
 	for(var card in cards) {
-		 /*if(cards[card]['name'] == "Estate"){
-			 for(var i = 0; i < 3; i++){
-				 deck.push(card);
-			 }
-		 }*/
-		 if(cards[card]['name'] == "Chapel"){
+		 if(cards[card]['name'] == "Estate"){
 			 for(var i = 0; i < 3; i++){
 				 deck.push(card);
 			 }
 		 }
+		 /*if(cards[card]['name'] == "Militia"){
+			 for(var i = 0; i < 3; i++){
+				 deck.push(card);
+			 }
+		 }*/
 		 if(cards[card]['name'] == "Copper"){
 			 for(var i = 0; i < 7; i++){
 				 deck.push(card);

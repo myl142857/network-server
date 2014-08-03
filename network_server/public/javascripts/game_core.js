@@ -20,6 +20,8 @@ function gameController($scope, $http, $compile, socket) {
 	$scope.decision = false;
 	$scope.selecting_cards = false;
 	$scope.gaining_cards = false;
+	$scope.waiting = false;
+	$scope.game_over = false;
  
 	socket.on('start_game', function (data) {
 		console.log('Starting game!');
@@ -74,13 +76,15 @@ function gameController($scope, $http, $compile, socket) {
         return result;
 	}
 	 $scope.use_card = function(card){
-		 if($scope.selecting_cards){
-			 console.log('Selecting card');
-			 card['selected'] = !card['selected'];
-		 }else{
-			 //Unlike buys, we need to know the exact index of the card in the player's hand
-			 console.log('Using card');
-			 socket.emit('player_use', { name: $scope.username, card:card });
+		 if(!$scope.waiting && !$scope.game_over){
+			 if($scope.selecting_cards){
+				 console.log('Selecting card');
+				 card['selected'] = !card['selected'];
+			 }else{
+				 //Unlike buys, we need to know the exact index of the card in the player's hand
+				 console.log('Using card');
+				 socket.emit('player_use', { name: $scope.username, card:card });
+			 }
 		 }
 	 };
 
@@ -89,21 +93,23 @@ function gameController($scope, $http, $compile, socket) {
 	  }
 	 
 	 $scope.buy_card = function(buy_card){
-		 if($scope.gaining_cards){
-			 console.log('Gaining Card');
-			 console.log($scope.player_decision.value);
-			 console.log(buy_card);
-			 if(buy_card['cost'] <= $scope.player_decision.value){
-				 console.log('In loop');
-				 for(var card in $scope.cards){
-					 $scope.cards[card]['selected'] = false;
-				 }
-				 buy_card['selected'] = true;
-				 console.log('Card Selected');
+		 if(!$scope.waiting && !$scope.game_over){
+			 if($scope.gaining_cards){
+				 console.log('Gaining Card');
+				 console.log($scope.player_decision.value);
 				 console.log(buy_card);
+				 if(buy_card['cost'] <= $scope.player_decision.value){
+					 console.log('In loop');
+					 for(var card in $scope.cards){
+						 $scope.cards[card]['selected'] = false;
+					 }
+					 buy_card['selected'] = true;
+					 console.log('Card Selected');
+					 console.log(buy_card);
+				 }
+			 }else{
+				 socket.emit('player_buy', { name: $scope.username, card:buy_card });
 			 }
-		 }else{
-			 socket.emit('player_buy', { name: $scope.username, card:buy_card });
 		 }
 	 };
 	 
@@ -125,12 +131,19 @@ function gameController($scope, $http, $compile, socket) {
 					 selected_cards.push($scope.hand[card]);
 				 }
 			 }
-			 if(selected_cards.length <= $scope.player_decision.value){
+			 if($scope.player_decision.value < 0 || 
+					 ((!$scope.player_decision.pick_exact && selected_cards.length <= $scope.player_decision.value) || 
+					($scope.player_decision.pick_exact && selected_cards.length == $scope.player_decision.value))
+				){
 				 console.log('Sending decision');
+				 console.log($scope.player_decision.pick_exact);
+				 console.log(selected_cards.length);
+				 console.log($scope.player_decision.value);
 				 console.log(selected_cards);
+				 console.log($scope.player_decision.value);
 				 socket.emit('card_decision_made',{ name:$scope.username, cards:selected_cards , action: $scope.player_decision.action });
 			 }else{
-				 alert('You have selected too many cards!');
+				 alert('Please select the correct card amount');
 			 }
 	 	}
 		if($scope.gaining_cards){
@@ -168,6 +181,7 @@ function gameController($scope, $http, $compile, socket) {
 		 });
 		 $scope.stats = data.stats;
 		 $scope.player_decision.parse_decision(data.actions);
+		 $scope.game_over = data.game_over;
 	};
 	 
 	$scope.loadData();
