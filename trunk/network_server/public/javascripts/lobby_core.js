@@ -121,7 +121,7 @@ function lobbyController($scope, $http, $compile, socket) {
 						//link to room
 						console.log('Room Joined!');
 						console.log(data);
-						window.location = "http://localhost:3000/game";
+						window.location = "/game";
 					}
 				})
 				.error(function(data) {
@@ -150,7 +150,7 @@ function lobbyController($scope, $http, $compile, socket) {
 				//link to room
 				console.log('Room Joined!');
 				console.log(data);
-				window.location = "http://localhost:3000/game";
+				window.location = "/game";
 			}
 		})
 		.error(function(data) {
