@@ -119,7 +119,7 @@ function gameController($scope, $http, $compile, socket) {
 	 
 	 $scope.exit_game = function(){
 		 socket.emit('exit_game',{ name:$scope.username });
-		 window.location = "http://localhost:3000/";
+		 window.location = "/";
 	 }
 	 
 	 $scope.make_decision = function(){
