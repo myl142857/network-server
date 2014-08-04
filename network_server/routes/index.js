@@ -26,7 +26,7 @@ var clients = [];*/
 
 var card_meta = [ 
                  //These cards are always available
-                  {name:"Province",avail:true,deck:"dominion",quantity:1,picture:"",type:["victory"],cost:8,attrs:{victory:"6"}},
+                  {name:"Province",avail:true,deck:"dominion",quantity:8,picture:"",type:["victory"],cost:8,attrs:{victory:"6"}},
                   {name:"Duchy",avail:true,deck:"dominion",quantity:8,picture:"",type:["victory"],cost:5,attrs:{victory:"3"}},
                   {name:"Estate",avail:true,deck:"dominion",quantity:8,picture:"",type:["victory"],cost:2,attrs:{victory:"1"}},
                  {name:"Gold",avail:true,deck:"dominion",quantity:20,picture:"",type:["coin"],cost:6,attrs:{money:"3"}},
@@ -57,8 +57,6 @@ You may immediately put your deck into your discard pile.
 Bureaucrat	Action – Attack	$4	Gain a silver card; put it on top of your deck. Each other player reveals a Victory card from his hand and puts it on his deck (or reveals a hand with no Victory cards).
 Feast	Action	$4	Trash this card. Gain a card costing up to $5.
 Gardens	Victory	$4	Worth 1 Victory for every 10 cards in your deck (rounded down).
-Militia	Action – Attack	$4	+$2
-Each other player discards down to 3 cards in his hand.
 Moneylender	Action	$4	Trash a Copper from your hand. If you do, +$3.
 Remodel	Action	$4	Trash a card from your hand. Gain a card costing up to $2 more than the trashed card.
 Spy	Action – Attack	$4	+1 Card; +1 Action
