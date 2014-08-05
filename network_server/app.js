@@ -36,6 +36,7 @@ app.use(session({
   genid: function(req) {
     return ""+intformat(generator.next(), 'dec'); // use UUIDs for session IDs
   },
+  maxAge: 1*60*1000,
   secret: 'dominion clone',
   cookie: { username: "" }
 }));
@@ -48,8 +49,9 @@ app.use(function(req,res,next){
     req.db = db;
     //This needs to be here for the views rendered in angular
     req.abs_path = dirname;
-    //This is a function that can be run optionally after a view is loaded
+    
     next();
+    
 });
 
 app.use('/', routes);

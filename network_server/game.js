@@ -3,7 +3,7 @@ function Game(players,cards,first) {
   this.cards = [];
   this.max_users = 2;
   this.current_turn = first;
-  this.game_started = null;
+  //this.game_started = null;
   for(var player in players){
 	  this.people[player] = {name:players[player]['name'],game:new Player_Data()};
   }
