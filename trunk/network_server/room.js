@@ -282,22 +282,31 @@ Room.prototype.get_user_index = function(user_name){
 	return null;
 }
 
-Room.prototype.add_user = function(user_name, socket_id){
-	//$scope.stats = {turn:0,action:0,buy:0,money:0};
-	//console.log('Adding User');
-	//console.log(user_id + ' : ' + user_name);
-	
+Room.prototype.add_user_session = function(user_name, sesssion_id){
 	for(var user in this.people){
-		//This needs to check for the socket instead once it gets pushed to production
-		if(this.people[user]['socket'] == socket_id){
+		if(this.people[user]['session'] == sesssion_id){
 			this.people[user]['name'] = user_name;
+			return null;
+		}
+	}
+	var object = {name:user_name, session:sesssion_id};
+	console.log('Created New User!');
+	console.log(object);
+	this.people.push(object);
+	return null;
+}
+
+Room.prototype.add_user_socket = function(user_name, socket_id){
+	for(var user in this.people){
+		if(this.people[user]['name'] == user_name){
+			this.people[user]['socket'] = socket_id;
 			return null;
 		}
 	}
 	var object = {name:user_name, socket:socket_id};
 	console.log('Created New User!');
 	console.log(object);
-	this.people.push({name:user_name, socket:socket_id});
+	this.people.push(object);
 	//console.log(this.people);
 	return null;
 }
@@ -320,6 +329,19 @@ Room.prototype.update_socket = function(user_name, socket_id){
 			this.people[user]['socket'] = socket_id;
 		}
 	}
+}
+
+Room.prototype.search_by_socket = function(socket_id){
+	console.log('Looking for...');
+	console.log(socket_id);
+	for(var user in this.people){
+		//console.log(this.people[user]);
+		//console.log(this.people[user]['socket']);
+		if(this.people[user]['socket'] == socket_id){
+			return this.people[user];
+		}
+	}
+	return null;
 }
 
 Room.prototype.find_socket = function(user_name){
