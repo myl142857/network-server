@@ -2,7 +2,7 @@ function Game(players,cards,first) {
   this.people = [];
   this.cards = [];
   this.max_users = 2;
-  this.current_turn = first;
+  this.current_turn = this.starting_player = first;
   //this.game_started = null;
   for(var player in players){
 	  this.people[player] = {name:players[player]['name'],game:new Player_Data()};
@@ -176,8 +176,14 @@ Game.prototype.return_winner = function(){
 		if(this.people[i]['game']['points'] > winner['game']['points']){
 			winner = this.people[i];
 		}else if(this.people[i]['game']['points'] == winner['game']['points']){
-			if(this.people[i]['game']['deck'].length > winner['game'][deck].length){
+			if(this.people[i]['game']['deck'].length > winner['game']['deck'].length){
 				winner = this.people[i];
+			}else if(this.people[i]['game']['deck'].length == winner['game']['deck'].length){
+				//If the current winner went before the checked person
+				console.log("Tie! Checking position...");
+				if(this.was_before(this.get_user_index(winner['name']),i)){
+					winner = this.people[i];
+				}
 			}
 		}
 	}
@@ -464,6 +470,26 @@ Game.prototype.next_turn = function(user){
 	
 	//Increment turn to the next player
 	this.increment_turn();
+}
+
+//This function figures out if the first player went before the second player
+Game.prototype.was_before = function(player_1_position, player_2_position){
+	console.log("Player1: " + player_1_position);
+	console.log("Player2: " + player_2_position);
+	var incrementor = this.starting_player;
+	while(true){
+		console.log("incrementor: " + incrementor);
+		if(this.incrementor == this.people.length){
+			this.incrementor = 0;
+		}
+		if(incrementor == player_1_position){
+			return true;
+		}
+		if(incrementor == player_2_position){
+			return false;
+		}
+		this.incrementor++;
+	}
 }
 
 Game.prototype.increment_turn = function(){

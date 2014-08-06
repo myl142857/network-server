@@ -89,13 +89,20 @@ function lobbyController($scope, $http, $compile, socket) {
 		
 		//Need to create the user
 		$http.post('/login', { username: user.name})
-		.success(function(data) {
-			//Then attach the user to the socket...
-			socket.emit('login', { name: data.name });
-		})
-		.error(function(data) {
-			console.log('Error: ' + data);
-		});
+			.success(function(data) {
+				console.log('name');
+				console.log(data.name);
+				if(data.action == 'update_list'){
+					console.log('update_list');
+					socket.emit('login', { name: data.name });
+				}else if(data.action == 'send_data'){
+					console.log('send_data');
+					socket.emit('update', { });
+				}
+			})
+			.error(function(data) {
+				console.log('Error: ' + data);
+			});
 	};
 	
 	$scope.create_room = function(room){
@@ -166,7 +173,7 @@ function lobbyController($scope, $http, $compile, socket) {
 		}
 	};
 	   
-	 $scope.loadData = function () {
+	 /*$scope.loadData = function () {
 		 console.log("Loading Page");
 	     $http.get('/users').success(function(data) {
 	    	 console.log(data);
@@ -176,12 +183,13 @@ function lobbyController($scope, $http, $compile, socket) {
 	    	 	 window.location = "/game";
 	    	 }
 	     });
-	  };
+	  };*/
 	  
-	  $scope.test = function(){
+	  /*$scope.test = function(){
 			console.log("Test"); 
-		 };
+		};*/
 	 
-	$scope.loadData();
+	//$scope.loadData();
+	$scope.login({name:""});
 	
 }

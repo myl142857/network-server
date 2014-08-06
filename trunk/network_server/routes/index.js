@@ -109,8 +109,20 @@ router.check_username = function(username){
 	return true;
 }
 
-router.get('/users', function(req, res) {	
-	res.send({users:get_user_info(),rooms:get_room_info(),in_room:find_room(req.session.username)==null?false:true});
+/*GET all meta*/
+router.get('/get_cards', function(req, res) {
+    var db = req.db;
+    var collection = db.get('card');
+    var room = find_room(req.session.username);
+    //var player = room.get_user(req.session.username);
+
+    //This call needs to hook to the database. The rest of the calls can just use the stored data
+    collection.find({},{},function(e,docs){
+        res.setHeader('Content-Type', 'application/json');
+        room.create_game(docs);
+        //console.log(room);
+        res.send(room.game.game_package(req.session.username));
+    });
 });
 
 router.run_server = function(listener){
@@ -150,8 +162,8 @@ router.run_server = function(listener){
 	server.set('authorization', function (data, accept) {
 	    // check if there's a cookie header
 	    if (data.headers.cookie) {
-	    	data.test = "Something is here!";
-	        data.sessionID = (data.headers.cookie.split('; ')[1]).replace("connect.sid=","");
+	    	//data.test = "Something is here!";
+	        //data.sessionID = (data.headers.cookie.split('; ')[1]).replace("connect.sid=","");
 	        //console.log('Authorization Finished');
 	        //console.log(data.headers);
 	        //console.log(data.res);
@@ -160,7 +172,7 @@ router.run_server = function(listener){
 	        //}
 	        //console.log(data.test);
 	        //console.log(data.sessionID);
-	        data.headers.sessionID = data.sessionID;
+	        data.headers.sessionID = (data.headers.cookie.split('; ')[1]).replace("connect.sid=","");
 	    } else {
 	       // if there isn't, turn down the connection with a message
 	       // and leave the function.
@@ -206,26 +218,30 @@ router.run_server = function(listener){
 			
 			var user_name = "";
 			var deletes = [];
-			for(var client in clients){
-				if(clients[client]['session_id'] == socket.handshake.headers.sessionID){
-					//console.log('Found match!');
-					user_name = lobby.search_by_socket(client);
-					console.log(user_name);
-					if(user_name!=null){
-						console.log('User is logged in!');
-						console.log('Name: ' + user_name.name);
-						server.sockets.emit('exit_game', { name: user_name.name });
-						var lobby_index = lobby.get_user_index(user_name.name);
-						lobby['people'].splice(lobby_index, 1);
-						console.log('Logged out of lobby');
-						server.sockets.emit('user', { users: get_user_info() });
-						server.sockets.emit('room', { rooms: get_room_info() });
+			if(socket.handshake.headers.sessionID != undefined){
+				for(var client in clients){
+					console.log('Looking for: ' + socket.handshake.headers.sessionID);
+					console.log('Found: ' + clients[client]['session_id']);
+					if(clients[client]['session_id'] == socket.handshake.headers.sessionID){
+						console.log('Found match!');
+						user_name = lobby.search_by_socket(client);
+						console.log(user_name);
+						if(user_name!=null){
+							console.log('User is logged in!');
+							console.log('Name: ' + user_name.name);
+							server.sockets.emit('exit_game', { name: user_name.name });
+							var lobby_index = lobby.get_user_index(user_name.name);
+							lobby['people'].splice(lobby_index, 1);
+							console.log('Logged out of lobby');
+							server.sockets.emit('user', { users: get_user_info() });
+							server.sockets.emit('room', { rooms: get_room_info() });
+						}
+						deletes.push(client);
 					}
-					deletes.push(client);
 				}
-			}
-			for(var item in deletes){
-				delete clients[item];
+				for(var item in deletes){
+					delete clients[item];
+				}
 			}
 			/*console.log('Remaining Clients');
 			for(var client in clients){
@@ -271,21 +287,10 @@ router.run_server = function(listener){
 		
 	    //socket.emit('message', { message: 'welcome to the chat' });
 		
-	    /*GET all meta*/
-	    router.get('/get_cards', function(req, res) {
-	        var db = req.db;
-	        var collection = db.get('card');
-	        var room = find_room(req.session.username);
-	        //var player = room.get_user(req.session.username);
-
-	        //This call needs to hook to the database. The rest of the calls can just use the stored data
-	        collection.find({},{},function(e,docs){
-	            res.setHeader('Content-Type', 'application/json');
-		        room.create_game(docs);
-		        //console.log(room);
-	            res.send(room.game.game_package(req.session.username));
-	        });
-	    });
+		router.get('/users', function(req, res) {	
+			
+			res.send({users:get_user_info(),rooms:get_room_info(),in_room:find_room(req.session.username)==null?false:true});
+		});
 	    
 	    socket.on('increment_turn', function (data) {
 	    	var user = data.name;
@@ -516,6 +521,7 @@ router.run_server = function(listener){
 			
 			if(room!=null){
 				var user_index = room.get_user_index(user_name);
+				var game_user_index = room.game.get_user_index(user_name);
 				
 				//Send message to players that current player has left
 				server.sockets.in(room['name']).emit('message',{ message:user_name + ' has left the game!' });
@@ -525,7 +531,14 @@ router.run_server = function(listener){
 				}
 				//Remove the player from the room
 				//lobby.add_user(user_name,socket.id);
+				
+				//You can technically be a part of the room without being in the game
 				room['people'].splice(user_index, 1);
+				room.game['people'].splice(game_user_index, 1);
+				room.game_started = false;
+				
+				console.log('Ending room people');
+				console.log(room['people']);
 				
 				switch(room['people'].length){
 					//If there are no more people in the room
@@ -535,7 +548,7 @@ router.run_server = function(listener){
 							var data = room.game.return_winner();
 			    			var message_string = "<br>The Game is Over<br>Winner: " + data['winner'] + data['user_meta'];
 				    		server.sockets.in(room['name']).emit('message',{ message:message_string});
-				    		server.sockets.in(room['name']).emit('end_game', {});
+				    		//server.sockets.in(room['name']).emit('end_game', {});
 						}
 						break;
 					default:break;
@@ -572,14 +585,21 @@ router.run_server = function(listener){
 		//We have to attach the router to the client socket here
 		router.post('/login', function(req, res) {
 			console.log(req.param('username'));
-			req.session.username = req.param('username');
-			lobby.add_user_session(req.param('username'),req.sessionID);
-			res.send({name: req.session.username});
+			console.log(req.session.username);
+			if(req.session.username != "" || req.param('username') != ""){
+				if(req.param('username') != ""){
+					req.session.username = req.param('username');
+				}
+				lobby.add_user_session(req.session.username,req.sessionID);
+				res.send({action: 'update_list',name: req.session.username});
+			}else{
+				res.send({action: 'send_data',name: req.session.username});
+			}
 		});
 		
 		//and here
 	    socket.on('login', function (data) {
-	    	console.log(socket);
+	    	//console.log(socket);
 	    	lobby.add_user_socket(data.name,socket.id);
 	    	server.sockets.emit('user', { users: get_user_info() });
 			server.sockets.emit('room', { rooms: get_room_info() });
@@ -587,6 +607,11 @@ router.run_server = function(listener){
 				console.log(lobby['people'][person]['name']);
 				clients[lobby['people'][person]['socket']].emit('message', {message : "Joined Room: " + lobby['name']});
 			}
+	    });
+	    
+	    socket.on('update',function (data){
+	    	socket.emit('user', { users: get_user_info() });
+			socket.emit('room', { rooms: get_room_info() });
 	    });
 	    
 	    server.on('connect_timeout', function (obj) {
@@ -625,7 +650,10 @@ function get_user_info(){
 				person_in_room= true;
 			}
 		}
-		lobby_people_info.push({name:lobby.people[person].name,in_room:person_in_room});
+		console.log('Lobby person name: ' + lobby.people[person].name);
+		if(lobby.people[person].name != "" && lobby.people[person].name != undefined){
+			lobby_people_info.push({name:lobby.people[person].name,in_room:person_in_room});
+		}
 	}
 	console.log('Start user info');
 	console.log(lobby_people_info);

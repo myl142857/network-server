@@ -53,9 +53,9 @@ function gameController($scope, $http, $compile, socket) {
         }
     });
     
-    socket.on('end_game', function (data) {
+    /*socket.on('end_game', function (data) {
     	console.log('The game has ended!');
-    });
+    });*/
 	
 	$scope.send = function(user){
 		console.log(user.message);
