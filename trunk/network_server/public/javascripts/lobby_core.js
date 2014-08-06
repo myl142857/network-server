@@ -90,14 +90,17 @@ function lobbyController($scope, $http, $compile, socket) {
 		//Need to create the user
 		$http.post('/login', { username: user.name})
 			.success(function(data) {
-				console.log('name');
-				console.log(data.name);
+				$('#login_field').val('');
+				
+				console.log(data);
+				
 				if(data.action == 'update_list'){
-					console.log('update_list');
 					socket.emit('login', { name: data.name });
 				}else if(data.action == 'send_data'){
-					console.log('send_data');
 					socket.emit('update', { });
+					if(data.name == 'duplicate'){
+						alert('This username already exists. Please choose another.');
+					}
 				}
 			})
 			.error(function(data) {
@@ -108,6 +111,8 @@ function lobbyController($scope, $http, $compile, socket) {
 	$scope.create_room = function(room){
 		$http.post('/create_room', { roomname: room.name})
 		.success(function(data) {
+			$('#room_field').val('');
+			
 			if(data === 'username'){
 				alert('You must log in to create a room!');
 			}else if(data === 'duplicate'){
