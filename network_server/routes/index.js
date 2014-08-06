@@ -586,15 +586,21 @@ router.run_server = function(listener){
 		router.post('/login', function(req, res) {
 			console.log(req.param('username'));
 			console.log(req.session.username);
-			if(req.session.username != "" || req.param('username') != ""){
+			//Things that can happen
+			//The user logs in and isnt a duplicate
+			//done: The user logs in and it is a duplicate
+			//The user returns from a game and has an active session
+			if(user_exists(req.param('username'))){
+				res.send({action: 'send_data',name: "duplicate"});
+			}else if(req.session.username != "" || req.param('username') != ""){
 				if(req.param('username') != ""){
 					req.session.username = req.param('username');
 				}
 				lobby.add_user_session(req.session.username,req.sessionID);
 				res.send({action: 'update_list',name: req.session.username});
 			}else{
-				res.send({action: 'send_data',name: req.session.username});
-			}
+				res.send({action: 'send_data',name: ""});
+			}	
 		});
 		
 		//and here
@@ -621,6 +627,18 @@ router.run_server = function(listener){
 	    
 	});
 };
+
+function user_exists(user){
+	if(lobby.find_user(user)){
+		return true;
+	}
+	for(var room in game_rooms){
+		if(game_rooms[room].find_user(user)){
+			return true;
+		}
+	}
+	return false;
+}
 
 function find_room(user){
 	for(var room in game_rooms){
