@@ -1,5 +1,7 @@
 var lobbyProject = angular.module('lobbyProject', []);
 
+//TODO: make sure that the user cannot reload the screen and log in as somebody else
+
 lobbyProject.factory('socket', function ($rootScope) {
 	  var socket = io.connect();
 	  return {
@@ -136,26 +138,32 @@ function lobbyController($scope, $http, $compile, socket) {
 	
 	$scope.join_room = function(room){
 		console.log('Attempting to join room');
-		$http.post('/join_room', { roomname: room})
-		.success(function(data) {
-			if(data === 'username'){
-				alert('You must log in to create a room!');
-			}else if(data === 'in_room'){
-				alert('You are already in this room!');
-			}else if(data === 'max_users'){
-				alert('This room has already reached it\'s max users!');
-			}else if(data === 'not_exists'){
-				alert('This room doesn\'t exist!');
-			}else{
-				//link to room
-				console.log('Room Joined!');
-				console.log(data);
-				window.location = "/game";
-			}
-		})
-		.error(function(data) {
-			console.log('Error: ' + data);
-		});
+		console.log("Room full");
+		console.log(room);
+		if(!room.full){
+			$http.post('/join_room', { roomname: room.name })
+			.success(function(data) {
+				if(data === 'username'){
+					alert('You must log in to create/join a room!');
+				}else if(data === 'in_room'){
+					alert('You are already in this room!');
+				}else if(data === 'max_users'){
+					alert('This room has already reached it\'s max users!');
+				}else if(data === 'not_exists'){
+					alert('This room doesn\'t exist!');
+				}else{
+					//link to room
+					console.log('Room Joined!');
+					console.log(data);
+					window.location = "/game";
+				}
+			})
+			.error(function(data) {
+				console.log('Error: ' + data);
+			});
+		}else{
+			alert('This room is already full!');
+		}
 	};
 	   
 	 $scope.loadData = function () {
@@ -164,6 +172,9 @@ function lobbyController($scope, $http, $compile, socket) {
 	    	 console.log(data);
 	    	 $scope.users = data.users;
 	    	 $scope.rooms = data.rooms;
+	    	 if(data.in_room){
+	    	 	 window.location = "/game";
+	    	 }
 	     });
 	  };
 	  

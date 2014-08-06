@@ -35,6 +35,7 @@
 		.info_div						{ text-align:center; width:60%; float:left; }
 		.decision_div					{ width:20%; float:left; }
 		
+		.text_div						{ cursor:default !important }
 		.card_div						{ padding:5px; cursor:pointer; }
 		.stat_label						{ width:100% }
 		
@@ -61,6 +62,14 @@
 		.victory_card					{ background-color:#65FF65 }
 		.reaction_card					{ background-color:#60B1FF }
 		
+		.unselectableText { 
+			-webkit-user-select: none; 
+			-khtml-user-select: none; 
+			-moz-user-select: none; 
+			-o-user-select: none; 
+			user-select: none; 
+		}
+		
 		
 	</style>
 
@@ -75,10 +84,10 @@
 </head>
 <!-- SET THE CONTROLLER AND GET ALL TODOS -->
 <body ng-controller="gameController">
-	<div class="game_container">
+	<div class="game_container unselectableText">
 		<div class="action_container" style="height:60%">
 		<div class="well buy_container">
-			<div style="margin-bottom:15px"><b>Store</b></div>
+			<div style="margin-bottom:15px" class="text_div"><b>Store</b></div>
 		    <div class="buy_div" ng-repeat="card in filterCards(cards,'type',['action']) | orderBy:sort_cost:true">
 		    	<div ng-class="{selected: card.selected}" class="well card_div hover_div" ng-click="buy_card(card)"> {{ card.name }} 
 		    		<div class="icon_div">
@@ -105,7 +114,7 @@
 			</div>
 		</div>
 		<div class="well victory_container">
-			<div style="margin-bottom:15px"><b>Victory Points</b></div>
+			<div style="margin-bottom:15px" class="text_div"><b>Victory Points</b></div>
 		    <div class="victory_div" ng-repeat="card in filterCards(cards,'type',['victory']).slice().reverse() | orderBy:sort_cost:true">
 		    	<div ng-class="{selected: card.selected}" class="well card_div hover_div" ng-click="buy_card(card)"> {{ card.name }} 
 		    		<div class="icon_div">
@@ -119,7 +128,7 @@
 		    		</div>
 		    	</div>
 		    </div>
-		    <div style="margin-top:20px;margin-bottom:15px"><b>Money</b></div>
+		    <div style="margin-top:20px;margin-bottom:15px" class="text_div"><b>Money</b></div>
 		    <div class="bank_div" ng-repeat="card in filterCards(cards,'type',['coin']).slice().reverse() | orderBy:sort_cost:true">
 		    	<div ng-class="{selected: card.selected}" class="well card_div hover_div" ng-click="buy_card(card)"> {{ card.name }} 
 		    		<div class="icon_div">
@@ -139,16 +148,16 @@
 		<div class="action_container" style="height:35%">
 			<div class="stat_container well">
 				<div class="" style="float:left;width:100%;display:inline;">
-					<div class="stat_label well card_div">
+					<div class="stat_label well card_div text_div">
 						<b> Turn: {{ stats.turn }} </b>
 					</div>
-					<div class="stat_label well card_div">
+					<div class="stat_label well card_div text_div">
 						<b> Actions: {{ stats.action }} </b>
 					</div>
-					<div class="stat_label well card_div">
+					<div class="stat_label well card_div text_div">
 						<b> Buys: {{ stats.buy }} </b>
 					</div>
-					<div class="stat_label well card_div">
+					<div class="stat_label well card_div text_div">
 						<b> Money: {{ stats.money }} </b>
 					</div>
 					<button type="button" ng-click="exit_game()" style="margin-top:10px">Exit Game</button>
@@ -157,7 +166,7 @@
 			<div ng-class="{waiting: waiting || (!player_turn && !selecting_cards)}" class="hand_container well">
 				<div class="" style="float:left;width:100%;">
 					<div class="hand_label" style="height:20px">
-						<div class="hand_title_div"><b> Hand </b></div>
+						<div class="hand_title_div text_div"><b> Hand </b></div>
 						<div class="info_div"> {{ decision_info }}</div>
 						<div class="decision_div">
 							<button ng-class="{invisible: !decision}" class="decision_button" type="button" ng-click="make_decision()" style="margin-top:10px">Done</button>
@@ -182,17 +191,17 @@
 			</div>
 			<div class="deck_container well">
 				<div class="" style="float:left;width:100%;">
-					<div class="deck_label" style="height:20px">
+					<div class="deck_label text_div" style="height:20px">
 						<b> Deck </b>
 					</div>
 					<div class="deck_div">
-						<div class="well card_div"> {{ deck.length }} </div>
+						<div class="well card_div text_div"> {{ deck.length }} </div>
 					</div>
-					<div class="deck_label" style="height:20px">
+					<div class="deck_label text_div" style="height:20px">
 						<b> Discard </b>
 					</div>
 					<div class="deck_div">
-						<div class="well card_div"> {{ discard.length }} </div>
+						<div class="well card_div text_div"> {{ discard.length }} </div>
 					</div>
 					<button type="button" ng-class="{invisible: !player_turn || game_over}" ng-click="end_turn()" style="margin-top:10px">End Turn</button>
 				</div>

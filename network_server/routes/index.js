@@ -102,17 +102,73 @@ router.get('/load', function(req, res) {
     );
 });
 
-router.get('/users', function(req, res) {
-	console.log(lobby);
-	res.send({users:lobby.people,rooms:game_rooms});
+router.check_username = function(username){
+	if(username === "" || username === undefined){
+		return false;
+	}
+	return true;
+}
+
+router.get('/users', function(req, res) {	
+	res.send({users:get_user_info(),rooms:get_room_info(),in_room:find_room(req.session.username)==null?false:true});
 });
 
 router.run_server = function(listener){
+	//var parseCookie = require('../node_modules/connect').utils;
+	
+	//var timeout = 1000;
+	
+	/*var t = io.connect("http://localhost/ping", {
+	    'port': 7070,
+	    'connect timeout': timeout,
+	    'reconnect': true,
+	    'reconnection delay': 2000,
+	    'max reconnection attempts': 10000,
+	    'force new connection':true
+	});*/
+	 
+	
 	var server = require('socket.io').listen(listener, function() {
 	  debug('Express server listening on port ' + server.address().port);
 	});
+	
+	//So I guess the serer checks to make sure the client is still there. Use this to test the disconnect
+	//server.set('heartbeat timeout', 1000);
+	//server.set('heartbeat interval', 1000);
+	
+	//console.log('server elements');
+	//for(var element in server){
+	//	console.log(element);
+	//}
 
+	//for(var element in server.set){
+	//	console.log(element);
+	//}
+	
 	//This will only work if we have a socket connected anyways
+	
+	server.set('authorization', function (data, accept) {
+	    // check if there's a cookie header
+	    if (data.headers.cookie) {
+	    	data.test = "Something is here!";
+	        data.sessionID = (data.headers.cookie.split('; ')[1]).replace("connect.sid=","");
+	        //console.log('Authorization Finished');
+	        //console.log(data.headers);
+	        //console.log(data.res);
+	        //for(var items in data){
+	        //	console.log(items);
+	        //}
+	        //console.log(data.test);
+	        //console.log(data.sessionID);
+	        data.headers.sessionID = data.sessionID;
+	    } else {
+	       // if there isn't, turn down the connection with a message
+	       // and leave the function.
+	       return accept('No cookie transmitted.', false);
+	    }
+	    // accept the incoming connection
+	    accept(null, true);
+	});
 	
 	console.log('Socket Set');
 	
@@ -122,14 +178,98 @@ router.run_server = function(listener){
 		
 		clients[socket.id] = socket;
 		
-	    //socket.emit('message', { message: 'welcome to the chat' });
-	    
-	    router.check_username = function(username){
-	    	if(username === "" || username === undefined){
-				return false;
+		//The unique header for each user
+		clients[socket.id]['session_id'] = socket.handshake.headers.sessionID;
+		
+		/*console.log(socket.handshake.headers.sessionID);
+		console.log('-------------------------------------');
+		console.log(socket.handshake.headers);
+		console.log('-------------------------------------');
+		console.log(socket.handshake);
+		console.log('-------------------------------------');
+		for(var element in socket){
+			console.log(element);
+		}
+		
+		console.log(socket.conn);
+		console.log('-------------------------------------');
+		console.log(socket.client);
+		console.log('-------------------------------------');
+		console.log(socket.handshake);
+		console.log('-------------------------------------');*/
+		
+		socket.on('disconnect', function() {
+			//so we have to comb through the clients and take out all the sockets belonging to this session
+			console.log('socket expired!');
+			console.log(socket.handshake.headers.sessionID);
+			console.log('-------------------------------------');
+			
+			var user_name = "";
+			var deletes = [];
+			for(var client in clients){
+				if(clients[client]['session_id'] == socket.handshake.headers.sessionID){
+					//console.log('Found match!');
+					user_name = lobby.search_by_socket(client);
+					console.log(user_name);
+					if(user_name!=null){
+						console.log('User is logged in!');
+						console.log('Name: ' + user_name.name);
+						server.sockets.emit('exit_game', { name: user_name.name });
+						var lobby_index = lobby.get_user_index(user_name.name);
+						lobby['people'].splice(lobby_index, 1);
+						console.log('Logged out of lobby');
+						server.sockets.emit('user', { users: get_user_info() });
+						server.sockets.emit('room', { rooms: get_room_info() });
+					}
+					deletes.push(client);
+				}
 			}
-	    	return true;
-	    }
+			for(var item in deletes){
+				delete clients[item];
+			}
+			/*console.log('Remaining Clients');
+			for(var client in clients){
+				console.log(client);
+			}*/
+			
+			//socket.socket.reconnect();
+			
+			/*for(var client in clients){
+				if(clients[client]['session_id'] == socket.handshake.headers.sessionID){
+					//This socket belongs to the session
+					
+				}
+			}*/
+		 });
+		
+		//setTimeout(function() {
+			
+			/*
+			//server.sockets.get('user_name', function (err, name) {
+			console.log('User timeout!');
+			//close the connection and log the user out after 10 min of inactivity
+			console.log(lobby);
+			var user_name = socket.username;
+			console.log(user_name);
+			console.log('Name: ' + user_name);
+			//log out of game room
+			server.sockets.emit('exit_game', { name: user_name });
+			console.log('Logged out of game_room');
+			
+			//log out of lobby
+			var lobby_index = lobby.get_user_index(user_name);
+			lobby['people'].splice(lobby_index, 1);
+			console.log('Logged out of lobby');
+			
+			server.sockets.emit('user', { users: get_user_info() });
+			server.sockets.emit('room', { rooms: get_room_info() });
+			console.log('Clients updated');
+			//});
+			*/
+			//server.close();
+		//}, 1 * 60 * 1000);
+		
+	    //socket.emit('message', { message: 'welcome to the chat' });
 		
 	    /*GET all meta*/
 	    router.get('/get_cards', function(req, res) {
@@ -271,6 +411,7 @@ router.run_server = function(listener){
 	    });
 	    
 		router.post('/create_room', function(req, res) {
+			console.log('User');
 			console.log(req.param('roomname'));
 			//Check to make sure that the user has a username....
 			console.log(req.session.username);
@@ -302,7 +443,8 @@ router.run_server = function(listener){
 					game_rooms.push(new_room);
 					
 					//Show the other users that the room has been created
-					server.sockets.emit('room', { rooms: game_rooms });
+					server.sockets.emit('user', { users: get_user_info() });
+					server.sockets.emit('room', { rooms: get_room_info() });
 					
 					//Return the room name
 					res.send({name: req.param('roomname')});
@@ -333,7 +475,10 @@ router.run_server = function(listener){
 							//socket.room = joining_room['name'];
 							//socket.join(socket.room);
 							
-							joining_room.add_user(req.session.username,lobby.find_socket(req.session.username));
+							joining_room.add_user_socket(req.session.username,lobby.find_socket(req.session.username));
+							
+							server.sockets.emit('user', { users: get_user_info() });
+							server.sockets.emit('room', { rooms: get_room_info() });
 							
 							//server.sockets.emit('user', { users: lobby.people });
 							res.send('joined');
@@ -368,40 +513,37 @@ router.run_server = function(listener){
 		socket.on('exit_game', function (data) {
 			var user_name = data.name;
 			var room = find_room(user_name);
-			var user_index = room.get_user_index(user_name);
 			
-			//Send message to players that current player has left
-			server.sockets.in(room['name']).emit('message',{ message:user_name + ' has left the game!' });
-			//Iterate the turn up one if it was the user's turn
-			if(room.game.get_user_index(user_name) == room.game.current_turn){
-				room.game.next_turn(user_name);
+			if(room!=null){
+				var user_index = room.get_user_index(user_name);
+				
+				//Send message to players that current player has left
+				server.sockets.in(room['name']).emit('message',{ message:user_name + ' has left the game!' });
+				//Iterate the turn up one if it was the user's turn
+				if(room.game_started && room.game.get_user_index(user_name) == room.game.current_turn){
+					room.game.next_turn(user_name);
+				}
+				//Remove the player from the room
+				//lobby.add_user(user_name,socket.id);
+				room['people'].splice(user_index, 1);
+				
+				switch(room['people'].length){
+					//If there are no more people in the room
+					case 0:remove_room(room['id']);break;
+					case 1:
+						if(!room['game']['game_ended']){
+							var data = room.game.return_winner();
+			    			var message_string = "<br>The Game is Over<br>Winner: " + data['winner'] + data['user_meta'];
+				    		server.sockets.in(room['name']).emit('message',{ message:message_string});
+				    		server.sockets.in(room['name']).emit('end_game', {});
+						}
+						break;
+					default:break;
+				}
+				
+				server.sockets.emit('user', { users: get_user_info() });
+				server.sockets.emit('room', { rooms: get_room_info() });
 			}
-			//Remove the player from the room
-			//lobby.add_user(user_name,socket.id);
-			room['people'].splice(user_index, 1);
-
-			switch(room['people'].length){
-				//If there are no more people in the room
-				case 0:remove_room(room['id']);break;
-				case 1:
-					if(!room['game']['game_ended']){
-						var data = room.game.return_winner();
-		    			var message_string = "<br>The Game is Over<br>Winner: " + data['winner'] + data['user_meta'];
-			    		server.sockets.in(room['name']).emit('message',{ message:message_string});
-			    		server.sockets.in(room['name']).emit('end_game', {});
-					}
-					break;
-				default:break;
-			}
-			//end game
-			//notify players that someone has left
-			//splice leaving player from room
-			//destroy room if nobody is left in it
-			//add player to lobby
-			
-			//TODO: take player out of lobby when they join game
-			//TODO: make sure that the player can't restart the game by refreshing browser
-			//TODO: make sure that the player is redirected to the correct room if they try to join the lobby again after starting a game
 	    });
 		
 		socket.on('enter_game', function (data) {
@@ -431,17 +573,25 @@ router.run_server = function(listener){
 		router.post('/login', function(req, res) {
 			console.log(req.param('username'));
 			req.session.username = req.param('username');
+			lobby.add_user_session(req.param('username'),req.sessionID);
 			res.send({name: req.session.username});
 		});
 		
 		//and here
 	    socket.on('login', function (data) {
-	    	lobby.add_user(data.name,socket.id);
-	    	server.sockets.emit('user', { users: lobby.people });
+	    	console.log(socket);
+	    	lobby.add_user_socket(data.name,socket.id);
+	    	server.sockets.emit('user', { users: get_user_info() });
+			server.sockets.emit('room', { rooms: get_room_info() });
 	    	for(var person in lobby['people']){
 				console.log(lobby['people'][person]['name']);
 				clients[lobby['people'][person]['socket']].emit('message', {message : "Joined Room: " + lobby['name']});
 			}
+	    });
+	    
+	    server.on('connect_timeout', function (obj) {
+	    	console.log(obj);
+	        console.log("connect_timeout");
 	    });
 	    
 	});
@@ -464,6 +614,35 @@ function remove_room(id){
 		}
 	}
 	game_rooms.splice(room_index, 1);
+}
+
+function get_user_info(){
+	lobby_people_info = [];
+	for(var person in lobby.people){
+		var person_in_room = false;
+		for(var room in game_rooms){
+			if(game_rooms[room].find_user(lobby.people[person].name)){
+				person_in_room= true;
+			}
+		}
+		lobby_people_info.push({name:lobby.people[person].name,in_room:person_in_room});
+	}
+	console.log('Start user info');
+	console.log(lobby_people_info);
+	console.log('End user info');
+	return lobby_people_info;
+}
+
+function get_room_info(){
+	game_room_info = [];
+	for(var room in game_rooms){
+		if(game_rooms[room]['people'].length == game_rooms[room]['max_users']){
+			game_room_info.push({name:game_rooms[room]['name'],full:true});
+		}else{
+			game_room_info.push({name:game_rooms[room]['name'],full:false});
+		}
+	}
+	return game_room_info;
 }
 
 module.exports = router;

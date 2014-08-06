@@ -8,26 +8,37 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1"><!-- Optimize mobile viewport -->
 
-	<title>Dominion Game Portal</title>
+	<title>Dominion Portal</title>
 
 	<!-- SCROLLS -->
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"><!-- load bootstrap -->
 	<style>
 		html 								{ overflow-y:scroll; }
-		body 								{ padding-top:50px; }
+		body 								{ padding-top:20px; }
 		#view_tab,#edit_tab,#home_tab 		{ margin-bottom:30px; }
 		.lobby_container					{ display: table; width:100%; height:100% }
 		.lobby_container div				{ margin:2%; }
-		.user_container, .room_container	{ display: table-cell;float:left;width:45%; height:100% }
+		.user_container, .room_container	{ display: table-cell;float:left;width:45%; height:500px }
 		.title_logo							{ text-align:center;margin-bottom:10px }
-		.user_form							{ margin-bottom:20px }
-		.user_list							{ overflow-y:auto }
+		.user_form							{ margin-bottom:20px; }
+		.user_list							{ overflow-y:auto; height:350px }
 		
 		.form_text_formatter				{ border-top-right-radius:0;border-bottom-right-radius:0;width:75%;float:left; }
 		.form_button_formatter				{ float:left; }
 		.room_div							{ background-color:#cccccc; }
 		.room_div:hover						{ background-color:#428bca;color: #ffffff; }
+		.room_div.full:hover				{ background-color:#FF9999;color: #ffffff; }
 		
+		.user_div							{ padding:5px }
+		.busy								{ background-color:#FF9999;color: #ffffff; }
+		
+		.unselectableText { 
+			-webkit-user-select: none; 
+			-khtml-user-select: none; 
+			-moz-user-select: none; 
+			-o-user-select: none; 
+			user-select: none; 
+		}
 		
 	</style>
 
@@ -39,8 +50,8 @@
 </head>
 <!-- SET THE CONTROLLER AND GET ALL TODOS -->
 <body ng-controller="lobbyController">
-	<h1 class="title_logo">Dominion Game Portal</h1>
-	<div class="lobby_container">
+	<h1 class="title_logo unselectableText"><b>Dominion Portal</b></h1>
+	<div class="lobby_container unselectableText">
 		<div class="well user_container">
 			<div class="user_form">
 				<form>
@@ -50,16 +61,15 @@
 				    </span>
 				</form>
 			</div>
+			<b>Users:</b>
 			<div class="user_list">
-				<b>Users:</b>
 				<div ng-repeat="user in users">
-					{{ user.name }}
+					<div ng-class="{busy: user.in_room}" class="well user_div" style="cursor:default"><b>{{ user.name }}</b></div>
 				</div>
 				<br>
 			</div>
 		</div>
 		<div class="well room_container">
-		
 			<div class="user_form">
 				<form>
 				    <input type='text' id="field" class="form-control form_text_formatter" placeholder="roomname" ng-model='room.name'>
@@ -68,10 +78,10 @@
 				    </span>
 				</form>
 			</div>
-			<div class="user_list">
 			<b>Rooms:</b>
+			<div class="user_list">
 				<div ng-repeat="room in rooms">
-					<div class="well room_div" ng-click='join_room(room.name)' style="cursor:pointer"><b>{{ room.name }}</b></div>
+					<div ng-class="{full: room.full}" class="well room_div" ng-click='join_room(room)' style="cursor:pointer"><b>{{ room.name }}</b></div>
 				</div>
 				<br>
 			</div>
