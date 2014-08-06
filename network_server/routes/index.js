@@ -521,7 +521,10 @@ router.run_server = function(listener){
 			
 			if(room!=null){
 				var user_index = room.get_user_index(user_name);
-				var game_user_index = room.game.get_user_index(user_name);
+				var game_user_index = -1;
+				if(room.game != null){
+					game_user_index = room.game.get_user_index(user_name);
+				}
 				
 				//Send message to players that current player has left
 				server.sockets.in(room['name']).emit('message',{ message:user_name + ' has left the game!' });
@@ -534,7 +537,9 @@ router.run_server = function(listener){
 				
 				//You can technically be a part of the room without being in the game
 				room['people'].splice(user_index, 1);
-				room.game['people'].splice(game_user_index, 1);
+				if(room.game != null){
+					room.game['people'].splice(game_user_index, 1);
+				}
 				room.game_started = false;
 				
 				console.log('Ending room people');
@@ -584,8 +589,8 @@ router.run_server = function(listener){
 		
 		//We have to attach the router to the client socket here
 		router.post('/login', function(req, res) {
-			console.log(req.param('username'));
-			console.log(req.session.username);
+			//console.log(req.param('username'));
+			//console.log(req.session.username);
 			//Things that can happen
 			//The user logs in and isnt a duplicate
 			//done: The user logs in and it is a duplicate
