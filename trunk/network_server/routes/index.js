@@ -597,12 +597,14 @@ router.run_server = function(listener){
 			//The user returns from a game and has an active session
 			if(user_exists(req.param('username'))){
 				res.send({action: 'send_data',name: "duplicate"});
-			}else if(req.session.username != "" || req.param('username') != ""){
+			}else if((req.session.username != "" && req.session.username != undefined) || req.param('username') != ""){
+				console.log('name: ' + req.param('username'));
+				console.log('session: ' + req.session.username);
 				if(req.param('username') != ""){
 					req.session.username = req.param('username');
 				}
 				lobby.add_user_session(req.session.username,req.sessionID);
-				res.send({action: 'update_list',name: req.session.username});
+				res.send({action: 'update_list',name: req.session.username,in_room:find_room(req.session.username)==null?false:true});
 			}else{
 				res.send({action: 'send_data',name: ""});
 			}	
@@ -616,7 +618,9 @@ router.run_server = function(listener){
 			server.sockets.emit('room', { rooms: get_room_info() });
 	    	for(var person in lobby['people']){
 				console.log(lobby['people'][person]['name']);
-				clients[lobby['people'][person]['socket']].emit('message', {message : "Joined Room: " + lobby['name']});
+				if(lobby['people'][person]['socket'] in clients){
+					clients[lobby['people'][person]['socket']].emit('message', {message : "Joined Room: " + lobby['name']});
+				}
 			}
 	    });
 	    
