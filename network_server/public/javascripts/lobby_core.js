@@ -86,7 +86,8 @@ function lobbyController($scope, $http, $compile, socket) {
 	};
 	
 	$scope.login = function(user){
-		
+		console.log('User');
+		console.log(user);
 		//Need to create the user
 		$http.post('/login', { username: user.name})
 			.success(function(data) {
@@ -102,6 +103,9 @@ function lobbyController($scope, $http, $compile, socket) {
 						alert('This username already exists. Please choose another.');
 					}
 				}
+				if(data.in_room){
+		    	 	 window.location = "/game";
+		    	 }
 			})
 			.error(function(data) {
 				console.log('Error: ' + data);
