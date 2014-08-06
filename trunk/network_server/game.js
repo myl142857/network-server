@@ -26,7 +26,7 @@ Game.prototype.return_gamedeck = function(cards){
 	var buyables = [];
 	for(var card in cards){
 		if(!cards[card]['avail']){
-			if(buyables.length<11){
+			if(buyables.length<12){
 				buyables.push(cards[card]);
 			}
 		}else{

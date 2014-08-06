@@ -13,49 +13,15 @@
 	<!-- SCROLLS -->
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"><!-- load bootstrap -->
 	<style>
+	
 		html 							{ overflow-y:scroll; }
 		body 							{ padding-top:0px; }
-		#view_tab,#edit_tab,#home_tab 	{ margin-bottom:30px; }
-		.game_container					{ width:100%;}
-		.chat_window					{ padding-left:5px; background:#000000; color:#ffff00; height: 300px; overflow-y:scroll; }
 		
-		.action_container				{ display: table; width:100%; float:left; }
-		.action_container div			{ margin:1%; }
+		.invisible						{ visibility: hidden }
 		
-		.buy_container					{ display: table-cell; height:100%; width:25%; float:left; }
-		.log_container					{ display: table-cell; height:100%; width:40%; float:left; }
-		.victory_container				{ display: table-cell; height:100%; width:25%; float:left; }
-		.victory_label					{ margin-top:20px; margin-bottom:20px; }
-		
-		.stat_container					{ display: table-cell; height:100%; width:15%; float:left; }
-		.hand_container					{ display: table-cell; height:100%; width:60%; float:left; }
-		.deck_container					{ display: table-cell; height:100%; width:15%; float:left; }
-		
-		.hand_title_div					{ width:10%; float:left; }
-		.info_div						{ text-align:center; width:60%; float:left; }
-		.decision_div					{ width:20%; float:left; }
-		
-		.text_div						{ cursor:default !important }
-		.card_div						{ padding:5px; cursor:pointer; }
-		.stat_label						{ width:100% }
-		
-		.icon_div						{ float:right; }
-		.icon_div div					{ }
-		.coin_icon, .card_icon			{ height:15px; width:15px; margin-right:5px;}
 		.restricted						{ background-color:#B00000 }
 		.waiting						{ background-color:#FF4141 }
 		.selected						{ background-color:#FA9A50 }
-		.invisible						{ visibility: hidden }
-		
-		.useable_card					{ width:150px; height:50px; float:left; text-align:center; padding-top:10px }
-		.hover_div 						{ position: relative; }
-		.big_img_right 					{ height: 150px; width: 200px; position: absolute; top: -40px; left: 300px; display:none; z-index:100; }
-		.big_img_left 					{ height: 150px; width: 200px; position: absolute; top: -40px; right: 300px; display:none; z-index:100; }
-		.big_img_right_closer 			{ height: 150px; width: 200px; position: absolute; top: -40px; left: 175px; display:none; z-index:100; }
-		.hover_div:hover .big_img_right { display:block; }
-		.hover_div:hover .big_img_left 	{ display:block; }
-		.hover_div:hover .big_img_right_closer 	{ display:block; }
-		
 		.coin_card						{ background-color:#FFFF7E }
 		.action_card					{ background-color:#BF6666 }
 		.curse_card						{ background-color:#CA85DC }
@@ -68,6 +34,61 @@
 			-moz-user-select: none; 
 			-o-user-select: none; 
 			user-select: none; 
+		}
+	
+		@media only screen and (max-width: 700px)  {
+		
+		}
+		
+		@media only screen and (min-width: 701px)  {
+			#view_tab,#edit_tab,#home_tab 	{ margin-bottom:30px; }
+			.game_container					{ width:100%;}
+			
+			.action_container				{ display: table; width:100%; float:left; }
+			.top_container					{ height:65% }
+			.bottom_container				{ height:30%; padding:0px }
+			.action_container div			{ margin:1%; }
+			
+			.buy_container					{ display: table-cell; height:100%; width:25%; float:left; }
+			.log_container					{ display: table-cell; height:100%; width:40%; float:left; }
+			.victory_container				{ display: table-cell; height:100%; width:25%; float:left; }
+			.victory_label					{ margin-top:20px; margin-bottom:20px; }
+			
+			.log_div						{ float:left; width:60%; height:350px }
+			.info_container_div				{ float:left; width:30%; }
+			
+			.chat_window					{ padding-left:5px; background:#000000; color:#ffff00; height: 85%; width:100%; overflow-y:scroll; float:left }
+			.chat_form_window				{ padding-left:5px; padding-top:5px; height: 20%; width:100%; float:left }
+			.form_text_formatter			{ border-top-right-radius:0;border-bottom-right-radius:0;width:75%;float:left; }
+			.form_button_formatter			{ float:left; }
+			
+			.stat_container					{ width:100%; }
+			.deck_container					{ width:100%; }
+			.info_button					{ margin-left:25px}
+			.info_button.waiting:hover		{ background-color:#B00000 }
+			.stat_holder					{ float:left;width:100%;display:inline; }
+			
+			.hand_container					{ height:100%; width:95%; float:left; padding:0px }
+			
+			.hand_title_div					{ width:10%; float:left; }
+			.info_div						{ text-align:center; width:60%; float:left; }
+			.decision_div					{ width:20%; float:left; }
+			
+			.text_div						{ cursor:default !important }
+			.card_div						{ padding:5px; cursor:pointer; }
+			.stat_label						{ width:100% }
+			
+			.icon_div						{ float:right; }
+			.coin_icon, .card_icon			{ height:15px; width:15px; margin-right:5px;}
+			
+			.useable_card					{ width:150px; height:50px; float:left; text-align:center; padding-top:10px }
+			.hover_div 						{ position: relative; }
+			.big_img_right 					{ height: 150px; width: 200px; position: absolute; top: -40px; left: 300px; display:none; z-index:100; }
+			.big_img_left 					{ height: 150px; width: 200px; position: absolute; top: -40px; right: 300px; display:none; z-index:100; }
+			.big_img_right_closer 			{ height: 150px; width: 200px; position: absolute; top: -40px; left: 175px; display:none; z-index:100; }
+			.hover_div:hover .big_img_right { display:block; }
+			.hover_div:hover .big_img_left 	{ display:block; }
+			.hover_div:hover .big_img_right_closer 	{ display:block; }
 		}
 		
 		
@@ -85,7 +106,7 @@
 <!-- SET THE CONTROLLER AND GET ALL TODOS -->
 <body ng-controller="gameController">
 	<div class="game_container unselectableText">
-		<div class="action_container" style="height:60%">
+		<div class="action_container top_container">
 		<div class="well buy_container">
 			<div style="margin-bottom:15px" class="text_div"><b>Store</b></div>
 		    <div class="buy_div" ng-repeat="card in filterCards(cards,'type',['action']) | orderBy:sort_cost:true">
@@ -104,13 +125,52 @@
 		</div>
 		<div class="well log_container">
 		    <div class="log_div">
-		    	<div id="content" class="chat_window"></div>
-		    </div>
-		    <div class="well">
-			    <form>
-				    <input type='text' id="field" placeholder="message" ng-model='user.message'>
-				    <input type='submit' value='Send' ng-click='send(user)' /> 
-				</form>
+		    	<div id="content" class="chat_window">
+		    	</div>
+		    	<div class="chat_form_window">
+			    	<form>
+					    <input type='text' id="message_field" class="form-control form_text_formatter" placeholder="message" ng-model='user.message'>
+					    <span class="input-group-btn">
+					    	<input class="btn btn-default form_button_formatter" type='submit' value='Send' ng-click='send(user)' /> 
+					    </span>
+					</form>
+				</div>
+			</div>
+	    	<div class="info_container_div">
+	    		<div class="stat_container">
+					<div class="stat_holder">
+						<div class="stat_label well card_div text_div">
+							<b> Turn: {{ stats.turn }} </b>
+						</div>
+						<div class="stat_label well card_div text_div">
+							<b> Actions: {{ stats.action }} </b>
+						</div>
+						<div class="stat_label well card_div text_div">
+							<b> Buys: {{ stats.buy }} </b>
+						</div>
+						<div class="stat_label well card_div text_div">
+							<b> Money: {{ stats.money }} </b>
+						</div>
+						<button type="button" class="btn btn-primary info_button waiting" ng-click="exit_game()" style="margin-top:10px">Exit Game</button>
+					</div>
+				</div>
+		    	<div class="deck_container">
+					<div class="" style="float:left;width:100%;">
+						<div class="deck_label text_div" style="height:20px">
+							<b> Deck </b>
+						</div>
+						<div class="deck_div">
+							<div class="well card_div text_div"> {{ deck.length }} </div>
+						</div>
+						<div class="deck_label text_div" style="height:20px">
+							<b> Discard </b>
+						</div>
+						<div class="deck_div">
+							<div class="well card_div text_div"> {{ discard.length }} </div>
+						</div>
+						<button type="button" class="btn btn-primary info_button" ng-class="{invisible: !player_turn || game_over}" ng-click="end_turn()" style="margin-top:10px">End Turn</button>
+					</div>
+				</div>
 			</div>
 		</div>
 		<div class="well victory_container">
@@ -145,24 +205,7 @@
 		</div>
 		</div>
 		<!-- <br> -->
-		<div class="action_container" style="height:35%">
-			<div class="stat_container well">
-				<div class="" style="float:left;width:100%;display:inline;">
-					<div class="stat_label well card_div text_div">
-						<b> Turn: {{ stats.turn }} </b>
-					</div>
-					<div class="stat_label well card_div text_div">
-						<b> Actions: {{ stats.action }} </b>
-					</div>
-					<div class="stat_label well card_div text_div">
-						<b> Buys: {{ stats.buy }} </b>
-					</div>
-					<div class="stat_label well card_div text_div">
-						<b> Money: {{ stats.money }} </b>
-					</div>
-					<button type="button" ng-click="exit_game()" style="margin-top:10px">Exit Game</button>
-				</div>
-			</div>
+		<div class="action_container bottom_container">
 			<div ng-class="{waiting: waiting || (!player_turn && !selecting_cards)}" class="hand_container well">
 				<div class="" style="float:left;width:100%;">
 					<div class="hand_label" style="height:20px">
@@ -189,23 +232,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="deck_container well">
-				<div class="" style="float:left;width:100%;">
-					<div class="deck_label text_div" style="height:20px">
-						<b> Deck </b>
-					</div>
-					<div class="deck_div">
-						<div class="well card_div text_div"> {{ deck.length }} </div>
-					</div>
-					<div class="deck_label text_div" style="height:20px">
-						<b> Discard </b>
-					</div>
-					<div class="deck_div">
-						<div class="well card_div text_div"> {{ discard.length }} </div>
-					</div>
-					<button type="button" ng-class="{invisible: !player_turn || game_over}" ng-click="end_turn()" style="margin-top:10px">End Turn</button>
-				</div>
-			</div>
+
 		</div>
 	</div>
 </body>
