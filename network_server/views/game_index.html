@@ -37,11 +37,57 @@
 		}
 	
 		@media only screen and (max-width: 700px)  {
-		
+			.game_container					{ width:100%;}
+			
+			.action_container				{ display: table; width:100%; float:left; }
+			.top_container					{ height:65%;  margin-top:250px; }
+			.bottom_container				{ height:30%; padding:0px }
+			.action_container div			{ margin:1%; }
+			
+			.buy_container					{ display: table-cell; height:100%; width:48%; float:left; }
+			.log_container					{ top:5px; left:5px; position: absolute; height:235px; width:98%; padding:0px }
+			.victory_container				{ display: table-cell; height:100%; width:48%; float:left; }
+			.victory_label					{ margin-top:20px; margin-bottom:20px; }
+			
+			.log_div						{ position:relative; float:left; width:60%; }
+			.info_container_div				{ position:relative; float:left; width:30%; }
+			
+			.chat_window					{ position:relative; padding-left:5px; background:#000000; color:#ffff00; height: 140px; width:100%; overflow-y:scroll; float:left }
+			.chat_form_window				{ padding-left:5px; padding-top:5px; height: 20%; width:100%; float:left }
+			.form_text_formatter			{ border-top-right-radius:0;border-bottom-right-radius:0;width:75%;float:left; }
+			.form_button_formatter			{ float:left; }
+			
+			.stat_container					{ position:relative; width:45%; float:left }
+			.deck_container					{ position:relative; width:45%; float:left }
+			.info_button					{ margin-left:5px}
+			.info_button.waiting:hover		{ background-color:#B00000 }
+			.stat_holder					{ float:left;width:100%;display:inline; }
+			.deck_holder					{ float:left;width:100%;display:inline; }
+			
+			.hand_container					{ height:100%; width:98%; float:left; padding:0px }
+			
+			.hand_title_div					{ width:10%; float:left; }
+			.info_div						{ text-align:center; width:60%; float:left; }
+			.decision_div					{ width:20%; float:left; }
+			
+			.text_div						{ cursor:default !important }
+			.card_div						{ padding:5px; cursor:pointer; }
+			.stat_label						{ width:100% }
+			
+			.icon_div						{ float:right; }
+			.coin_icon, .card_icon			{ height:15px; width:15px; margin-right:5px;}
+			
+			.useable_card					{ width:150px; height:50px; float:left; text-align:center; padding-top:10px }
+			.hover_div 						{ position: relative; }
+			.big_img_right 					{ height: 150px; width: 200px; position: absolute; top: -40px; left: 150px; display:none; z-index:100; }
+			.big_img_left 					{ height: 150px; width: 200px; position: absolute; top: -40px; right: 150px; display:none; z-index:100; }
+			.big_img_right_closer 			{ height: 150px; width: 200px; position: absolute; top: -40px; left: 50px; display:none; z-index:100; }
+			.hover_div:hover .big_img_right { display:block; }
+			.hover_div:hover .big_img_left 	{ display:block; }
+			.hover_div:hover .big_img_right_closer 	{ display:block; }
 		}
 		
 		@media only screen and (min-width: 701px)  {
-			#view_tab,#edit_tab,#home_tab 	{ margin-bottom:30px; }
 			.game_container					{ width:100%;}
 			
 			.action_container				{ display: table; width:100%; float:left; }
@@ -67,6 +113,7 @@
 			.info_button					{ margin-left:25px}
 			.info_button.waiting:hover		{ background-color:#B00000 }
 			.stat_holder					{ float:left;width:100%;display:inline; }
+			.deck_holder					{ float:left;width:100%;display:inline; }
 			
 			.hand_container					{ height:100%; width:95%; float:left; padding:0px }
 			
@@ -155,7 +202,7 @@
 					</div>
 				</div>
 		    	<div class="deck_container">
-					<div class="" style="float:left;width:100%;">
+					<div class="deck_holder">
 						<div class="deck_label text_div" style="height:20px">
 							<b> Deck </b>
 						</div>
