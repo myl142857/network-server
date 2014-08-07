@@ -28,6 +28,8 @@
 		.victory_card					{ background-color:#65FF65 }
 		.reaction_card					{ background-color:#60B1FF }
 		
+		.dialog_box						{ background-color:#C2C2C2; border-color:#60B1FF; border-width:3px }
+		
 		.unselectableText { 
 			-webkit-user-select: none; 
 			-khtml-user-select: none; 
@@ -44,9 +46,9 @@
 			.bottom_container				{ height:30%; padding:0px }
 			.action_container div			{ margin:0%; }
 			
-			.buy_container					{ display: table-cell; height:100%; width:48%; float:left; padding:1px }
+			.buy_container					{ display: table-cell; height:100%; width:48%; float:left; padding:1px; margin-left:5px; }
 			.log_container					{ top:5px; left:5px; position: absolute; height:235px; width:98%; padding:0px }
-			.victory_container				{ display: table-cell; height:100%; width:48%; float:left; padding:1px }
+			.victory_container				{ display: table-cell; height:100%; width:48%; float:left; padding:1px; margin-left:5px; }
 			.victory_label					{ margin-top:20px; margin-bottom:20px; }
 			
 			.log_div						{ position:relative; float:left; width:60%; }
@@ -66,8 +68,10 @@
 			.deck_label						{ display:none }
 			.deck_div						{ display:none }
 			.turn_div						{ display:none }
+			.dialog_description				{ display:none }
 			
 			.hand_container					{ height:100%; width:98%; float:left; padding:0px }
+			.hand_container	div				{ margin:1%; }
 			
 			.hand_title_div					{ width:10%; float:left; }
 			.info_div						{ text-align:center; width:60%; float:left; }
@@ -82,9 +86,9 @@
 			
 			.useable_card					{ width:150px; height:50px; float:left; text-align:center; padding-top:10px }
 			.hover_div 						{ position: relative; }
-			.big_img_right 					{ height: 150px; width: 200px; position: absolute; top: -40px; left: 150px; display:none; z-index:100; }
-			.big_img_left 					{ height: 150px; width: 200px; position: absolute; top: -40px; right: 150px; display:none; z-index:100; }
-			.big_img_right_closer 			{ height: 150px; width: 200px; position: absolute; top: -40px; left: 50px; display:none; z-index:100; }
+			.big_img_right 					{ height: 150px; width: 165px; position: absolute; top: -40px; left: 150px; display:none; z-index:100; }
+			.big_img_left 					{ height: 150px; width: 165px; position: absolute; top: -40px; right: 150px; display:none; z-index:100; }
+			.big_img_right_closer 			{ height: 150px; width: 165px; position: absolute; bottom: 30px; left: 50px; display:none; z-index:100; }
 			.hover_div:hover .big_img_right { display:block; }
 			.hover_div:hover .big_img_left 	{ display:block; }
 			.hover_div:hover .big_img_right_closer 	{ display:block; }
@@ -135,7 +139,7 @@
 			.hover_div 						{ position: relative; }
 			.big_img_right 					{ height: 150px; width: 200px; position: absolute; top: -40px; left: 300px; display:none; z-index:100; }
 			.big_img_left 					{ height: 150px; width: 200px; position: absolute; top: -40px; right: 300px; display:none; z-index:100; }
-			.big_img_right_closer 			{ height: 150px; width: 200px; position: absolute; top: -40px; left: 175px; display:none; z-index:100; }
+			.big_img_right_closer 			{ height: 150px; width: 200px; position: absolute; bottom: 30px; left: 135px; display:none; z-index:100; }
 			.hover_div:hover .big_img_right { display:block; }
 			.hover_div:hover .big_img_left 	{ display:block; }
 			.hover_div:hover .big_img_right_closer 	{ display:block; }
@@ -165,7 +169,7 @@
 			    			<img class="coin_icon" src="/images/coin_icon.png"/> {{ card.cost }} 
 			    			<img class="card_icon" src="/images/card_icon.png"/>{{ card.current_quantity }} 
 		    		</div>
-		    		<div class="big_img_right well"><b>{{ card.name }}</b><br>
+		    		<div class="big_img_right well dialog_box"><b class="dialog_description">{{ card.name }}</b><br>
 		    			<div ng-repeat="attr in card.description"> 
 		    				{{ attr }} <br>
 		    			</div>
@@ -231,7 +235,7 @@
 			    			<img class="coin_icon" src="/images/coin_icon.png"/> {{ card.cost }} 
 			    			<img class="card_icon" src="/images/card_icon.png"/>{{ card.current_quantity }} 
 		    		</div>
-		    		<div class="big_img_left well"><b>{{ card.name }}</b><br>
+		    		<div class="big_img_left well dialog_box"><b class="dialog_description">{{ card.name }}</b><br>
 		    			<div ng-repeat="attr in card.description"> 
 		    				{{ attr }} <br>
 		    			</div>
@@ -245,7 +249,7 @@
 			    			<img class="coin_icon" src="/images/coin_icon.png"/> {{ card.cost }} 
 			    			<img class="card_icon" src="/images/card_icon.png"/>{{ card.current_quantity }} 
 		    		</div>
-		    		<div class="big_img_left well"><b>{{ card.name }}</b><br>
+		    		<div class="big_img_left well dialog_box"><b class="dialog_description">{{ card.name }}</b><br>
 		    			<div ng-repeat="attr in card.description"> 
 		    				{{ attr }} <br>
 		    			</div>
@@ -273,7 +277,7 @@
 						victory_card: (card.type.indexOf('victory') != -1 && card.type.indexOf('curse') == -1 && player_turn && !selecting_cards),
 						reaction_card: (card.type.indexOf('reaction') != -1 && player_turn && !selecting_cards)}" 
 						class="hover_div well card_div useable_card" ng-click="use_card(card)"> {{ card.name }} 
-							<div class="big_img_right_closer well"><b>{{ card.name }}</b><br>
+							<div class="big_img_right_closer well dialog_box"><b class="dialog_description">{{ card.name }}</b><br>
 				    			<div ng-repeat="attr in card.description"> 
 				    				{{ attr }} <br>
 				    			</div>
