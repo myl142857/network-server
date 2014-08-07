@@ -42,11 +42,11 @@
 			.action_container				{ display: table; width:100%; float:left; }
 			.top_container					{ height:65%;  margin-top:250px; }
 			.bottom_container				{ height:30%; padding:0px }
-			.action_container div			{ margin:1%; }
+			.action_container div			{ margin:0%; }
 			
-			.buy_container					{ display: table-cell; height:100%; width:48%; float:left; }
+			.buy_container					{ display: table-cell; height:100%; width:48%; float:left; padding:1px }
 			.log_container					{ top:5px; left:5px; position: absolute; height:235px; width:98%; padding:0px }
-			.victory_container				{ display: table-cell; height:100%; width:48%; float:left; }
+			.victory_container				{ display: table-cell; height:100%; width:48%; float:left; padding:1px }
 			.victory_label					{ margin-top:20px; margin-bottom:20px; }
 			
 			.log_div						{ position:relative; float:left; width:60%; }
@@ -57,12 +57,15 @@
 			.form_text_formatter			{ border-top-right-radius:0;border-bottom-right-radius:0;width:75%;float:left; }
 			.form_button_formatter			{ float:left; }
 			
-			.stat_container					{ position:relative; width:45%; float:left }
-			.deck_container					{ position:relative; width:45%; float:left }
+			.stat_container					{ position:relative; width:100%; }
+			.deck_container					{ position:relative; width:100%;  }
 			.info_button					{ margin-left:5px}
 			.info_button.waiting:hover		{ background-color:#B00000 }
-			.stat_holder					{ float:left;width:100%;display:inline; }
-			.deck_holder					{ float:left;width:100%;display:inline; }
+			.stat_holder					{ width:100%;display:inline; }
+			.deck_holder					{ width:100%;display:inline; }
+			.deck_label						{ display:none }
+			.deck_div						{ display:none }
+			.turn_div						{ display:none }
 			
 			.hand_container					{ height:100%; width:98%; float:left; padding:0px }
 			
@@ -74,8 +77,8 @@
 			.card_div						{ padding:5px; cursor:pointer; }
 			.stat_label						{ width:100% }
 			
-			.icon_div						{ float:right; }
-			.coin_icon, .card_icon			{ height:15px; width:15px; margin-right:5px;}
+			.icon_div						{ float:right; z-index:-1; }
+			.coin_icon, .card_icon			{ height:15px; width:15px;}
 			
 			.useable_card					{ width:150px; height:50px; float:left; text-align:center; padding-top:10px }
 			.hover_div 						{ position: relative; }
@@ -186,7 +189,7 @@
 	    	<div class="info_container_div">
 	    		<div class="stat_container">
 					<div class="stat_holder">
-						<div class="stat_label well card_div text_div">
+						<div class="stat_label well card_div text_div turn_div">
 							<b> Turn: {{ stats.turn }} </b>
 						</div>
 						<div class="stat_label well card_div text_div">

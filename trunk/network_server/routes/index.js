@@ -172,7 +172,8 @@ router.run_server = function(listener){
 	        //}
 	        //console.log(data.test);
 	        //console.log(data.sessionID);
-	        data.headers.sessionID = (data.headers.cookie.split('; ')[1]).replace("connect.sid=","");
+	    	data.headers.sessionID = (data.headers.cookie.split('; ')[1]);
+	        //data.headers.sessionID = (data.headers.cookie.split('; ')[1]).replace("connect.sid=","");
 	    } else {
 	       // if there isn't, turn down the connection with a message
 	       // and leave the function.
