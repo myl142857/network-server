@@ -318,9 +318,6 @@ router.run_server = function(listener){
 	    		console.log('Decision valid');
 	    		console.log(data.action);
 	    		//There needs to be a decision check here
-	    		
-	    		var took_action = false;
-	    		
 	    		if(data.action == "trash"){
 		    		result_message = room.game.trash_cards(user,cards,data.on_action,false);
 	    		}
