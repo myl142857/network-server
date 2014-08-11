@@ -13,11 +13,13 @@ function gameController($scope, $http, $compile, socket) {
 	$scope.discard = [];
 	$scope.hand = [];
 	$scope.hand_index = [];
+	$scope.hand_view = [];
 	$scope.stats = {turn:0,action:0,buy:0,money:0};
 	$scope.decision_info = "";
 	$scope.player_turn = false;
 	$scope.player_decision = null;
 	$scope.decision = false;
+	$scope.choice = false;
 	$scope.selecting_cards = false;
 	$scope.gaining_cards = false;
 	$scope.waiting = false;
@@ -66,11 +68,15 @@ function gameController($scope, $http, $compile, socket) {
 	
 	$scope.filterCards = function(cards,field,values){
 		var result = [];
+		//console.log('values');
+		//console.log(values);
 		angular.forEach(cards, function(card) {
 			angular.forEach(values, function(value) {
-				if(card[field] == value){
-					result.push(card);
-				}
+				angular.forEach(card[field], function(type) {
+					if(type === value){
+						result.push(card);
+					}
+				});
 			});
         });
         return result;
@@ -122,13 +128,43 @@ function gameController($scope, $http, $compile, socket) {
 		 window.location = "/";
 	 }
 	 
+	 $scope.make_choice = function(choice){
+		 console.log('Choice made!');
+		 console.log(choice);
+		 if(!choice){
+			 //$scope.player_decision.reset_scope();
+			 if('alt_action' in $scope.player_decision.actions){
+				 $scope.player_decision.parse_decision([$scope.player_decision.actions['alt_action']]);
+				 console.log($scope.player_decision.actions);
+				 if($scope.player_decision.immediate_action){
+					 var selected_cards = [];
+					 for(var card_name in $scope.player_decision.immediate_cards){
+						 for(var card in $scope.cards){
+							 if($scope.player_decision.immediate_cards[card_name] === $scope.cards[card]['name']){
+								 selected_cards.push($scope.cards[card]);
+							 }
+						 }
+					 }
+					 socket.emit('card_decision_made',{ name:$scope.username, cards:selected_cards , action: $scope.player_decision.action, on_action:$scope.player_decision.on_action });
+				 }
+			 }else{
+				 //The user chooses to skip the action
+				 socket.emit('card_decision_made',{ name:$scope.username, cards:[] , action: 'skip', 
+					 on_action:{} });
+			 }
+		 }else{
+			 socket.emit('card_decision_made',{ name:$scope.username, cards:$scope.player_decision.immediate_cards , action: $scope.player_decision.action, 
+				 on_action:$scope.player_decision.on_action });
+		 }
+	 }
+	 
 	 $scope.make_decision = function(){
 		 console.log('Making decision');
 		 if($scope.selecting_cards){
 			 var selected_cards = [];
-			 for(var card in $scope.hand){
-				 if($scope.hand[card]['selected']){
-					 selected_cards.push($scope.hand[card]);
+			 for(var card in $scope.hand_view){
+				 if($scope.hand_view[card]['selected']){
+					 selected_cards.push($scope.hand_view[card]);
 				 }
 			 }
 			 if($scope.player_decision.value < 0 || 
@@ -141,7 +177,7 @@ function gameController($scope, $http, $compile, socket) {
 				 console.log($scope.player_decision.value);
 				 console.log(selected_cards);
 				 console.log($scope.player_decision.value);
-				 socket.emit('card_decision_made',{ name:$scope.username, cards:selected_cards , action: $scope.player_decision.action });
+				 socket.emit('card_decision_made',{ name:$scope.username, cards:selected_cards , action: $scope.player_decision.action, on_action:$scope.player_decision.on_action });
 			 }else{
 				 alert('Please select the correct card amount');
 			 }
@@ -153,7 +189,7 @@ function gameController($scope, $http, $compile, socket) {
 					 selected_cards.push($scope.cards[card]);
 				 }
 			 }
-			 socket.emit('card_decision_made',{ name:$scope.username, cards:selected_cards , action: $scope.player_decision.action });
+			 socket.emit('card_decision_made',{ name:$scope.username, cards:selected_cards , action: $scope.player_decision.action, on_action:$scope.player_decision.on_action });
 		 }
 	 }
 	 
@@ -169,7 +205,7 @@ function gameController($scope, $http, $compile, socket) {
 	  
 	$scope.load_data = function(data){
 		 console.log(data);
-		 $scope.player_decision.reset_scope();
+		 //$scope.player_decision.reset_scope();
    	 	 $scope.player_turn = data.turn;
 	   	 $scope.cards = data.cards;
 	   	 $scope.deck = data.deck;
@@ -179,9 +215,14 @@ function gameController($scope, $http, $compile, socket) {
 		 angular.forEach(data.hand, function(card_index) {
 			 $scope.hand.push(jQuery.extend(true, {}, $scope.cards[card_index]));
 		 });
+		 $scope.hand_view = $scope.hand;
 		 $scope.stats = data.stats;
-		 $scope.player_decision.parse_decision(data.actions);
 		 $scope.game_over = data.game_over;
+		 $scope.player_decision.parse_decision(data.actions);
+		 if($scope.player_decision.immediate_action){
+			 socket.emit('card_decision_made',{ name:$scope.username, cards:$scope.player_decision.immediate_cards , action: $scope.player_decision.action, 
+				 on_action:$scope.player_decision.on_action });
+		 }
 	};
 	 
 	$scope.loadData();
