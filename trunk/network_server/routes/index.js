@@ -37,11 +37,15 @@ var card_meta = [
                  //These cards are picked from
                  {name:"Cellar",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:2,attrs:{action:"1",discard:"*",discard_actions:{cards:"discard"}}},
                  {name:"Chapel",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:2,attrs:{trash_under:"4"}},
+                 {name:"Moat",avail:false,deck:"dominion",quantity:10,picture:"",type:["action","reaction"],cost:2,attrs:{card:"2",immune:"attack"}},
                  {name:"Village",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{card:"1",action:"2"}},
                  {name:"Woodcutter",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{buy:"1",money:"2"}},
                  {name:"Workshop",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:3,attrs:{gain_card:"4"}},
-                 {name:"Smithy",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:4,attrs:{card:"3"}},
+                 {name:"Feast",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:4,attrs:{trash_specific:"Feast",trash:"*",trash_actions:{gain_card:"5"}}},
                  {name:"Militia",avail:false,deck:"dominion",quantity:10,picture:"",type:["action","attack"],cost:4,attrs:{money:"2",discard:"*",discard_actions:{card_opponents_under:"3"}}},
+                 {name:"Moneylender",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:4,attrs:{trash_specific:"Copper",trash:"*",trash_actions:{money:"3"}}},
+                 {name:"Smithy",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:4,attrs:{card:"3"}},
+                 {name:"Spy",avail:false,deck:"dominion",quantity:10,picture:"",type:["action","attack"],cost:4,attrs:{card:"1",action:"1",discard:"*",discard_actions:{peek_discard:"1"}}},
                  {name:"Council Room",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"4",buy:"1",card_opponents:"1"}},
                  {name:"Festival",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{action:"1",buy:"1",money:"2"}},
                  {name:"Laboratory",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"2",action:"1"}},
@@ -50,17 +54,12 @@ var card_meta = [
                  ];
 
 /*
-Moat	Action – Reaction	$2	+2 Cards
-When another player plays an Attack card, you may reveal this from your hand. If you do, you are unaffected by that Attack.
 Chancellor	Action	$3	+$2
 You may immediately put your deck into your discard pile.
 Bureaucrat	Action – Attack	$4	Gain a silver card; put it on top of your deck. Each other player reveals a Victory card from his hand and puts it on his deck (or reveals a hand with no Victory cards).
 Feast	Action	$4	Trash this card. Gain a card costing up to $5.
 Gardens	Victory	$4	Worth 1 Victory for every 10 cards in your deck (rounded down).
-Moneylender	Action	$4	Trash a Copper from your hand. If you do, +$3.
 Remodel	Action	$4	Trash a card from your hand. Gain a card costing up to $2 more than the trashed card.
-Spy	Action – Attack	$4	+1 Card; +1 Action
-Each player (including you) reveals the top card of his deck and either discards it or puts it back, your choice.
 Thief	Action – Attack	$4	Each other player reveals the top 2 cards of his deck. If they revealed any Treasure cards, they trash one of them that you choose. You may gain any or all of these trashed cards. They discard the other revealed cards.
 Throne Room	Action	$4	Choose an Action card in your hand. Play it twice.
 Library	Action	$5	Draw until you have 7 cards in hand. You may set aside any Action cards drawn this way, as you draw them; discard the set aside cards after you finish drawing.
@@ -317,9 +316,16 @@ router.run_server = function(listener){
 	    	console.log('Received decision');
 	    	if(room.game.player_decision_check(user)){
 	    		console.log('Decision valid');
+	    		console.log(data.action);
 	    		//There needs to be a decision check here
+	    		
+	    		var took_action = false;
+	    		
 	    		if(data.action == "trash"){
-		    		result_message = room.game.trash_cards(user,cards);
+		    		result_message = room.game.trash_cards(user,cards,data.on_action,false);
+	    		}
+	    		if(data.action == "trash_self"){
+		    		result_message = room.game.trash_cards(user,cards,data.on_action,true);
 	    		}
 	    		if(data.action == "gain_card"){
 	    			result_message = room.game.gain_cards(user,cards);
@@ -330,7 +336,16 @@ router.run_server = function(listener){
 	    		if(data.action == "discard_down_to"){
 	    			result_message = room.game.discard(user,cards);
 	    		}
-	    		room.game['people'][user_index]['game']['extra_actions'] = [];
+	    		if(data.action == "discard_deck"){
+	    			result_message = room.game.discard_deck(user,cards);
+	    		}
+	    		if(data.action == "avoid"){
+	    			result_message = [room.game.people[room.game.get_user_index(user)]['name'] + " shows reaction card and avoids attack!"];
+	    		}
+	    		room.game['people'][user_index]['game']['extra_actions'].splice(0,1);
+	    		
+	    		console.log('Actions in queue');
+	    		console.log(room.game['people'][user_index]['game']['extra_actions']);
 	    		
 	    		var still_waiting = false;
 	    		for(var person in room.game.people){
@@ -338,8 +353,15 @@ router.run_server = function(listener){
 	    				still_waiting = true;
 	    			}
 	    		}
+	    		//If all the other players are done, removing the waiting action
 	    		if(!still_waiting){
-	    			room.game['people'][room.game.current_turn]['game']['extra_actions'] = [];
+	    			//person['game']['extra_actions'].push({action:'wait_others',value:'*',general:'waiting'});
+	    			for(var action in room.game['people'][room.game.current_turn]['game']['extra_actions']){
+	    				if(room.game['people'][room.game.current_turn]['game']['extra_actions'][action]['general'] === 'waiting'){
+	    					room.game['people'][room.game.current_turn]['game']['extra_actions'].splice(action, 1);
+	    				}
+	    			}
+	    			//room.game['people'][room.game.current_turn]['game']['extra_actions'] = [];
 	    		}
 	    		//user_index == room.game.current_turn
 	    		

@@ -17,7 +17,7 @@
 		html 							{ overflow-y:scroll; }
 		body 							{ padding-top:0px; }
 		
-		.invisible						{ visibility: hidden }
+		.invisible						{ display: gone }
 		
 		.restricted						{ background-color:#B00000 }
 		.waiting						{ background-color:#FF4141 }
@@ -73,8 +73,9 @@
 			.hand_container	div				{ margin:1%; }
 			
 			.hand_title_div					{ width:10%; float:left; }
-			.info_div						{ text-align:center; width:60%; float:left; }
-			.decision_div					{ width:20%; float:left; }
+			.info_div						{ text-align:center; width:50%; float:left; }
+			.choice_div						{ width:15%; float:left; }
+			.decision_div					{ width:15%; float:left; }
 			
 			.text_div						{ cursor:default !important }
 			.card_div						{ padding:5px; cursor:pointer; }
@@ -124,8 +125,9 @@
 			.hand_container					{ height:100%; width:95%; float:left; padding:0px }
 			
 			.hand_title_div					{ width:10%; float:left; }
-			.info_div						{ text-align:center; width:60%; float:left; }
-			.decision_div					{ width:20%; float:left; }
+			.info_div						{ text-align:center; width:50%; float:left; }
+			.choice_div						{ width:15%; float:left; }
+			.decision_div					{ width:15%; float:left; }
 			
 			.text_div						{ cursor:default !important }
 			.card_div						{ padding:5px; cursor:pointer; }
@@ -136,9 +138,9 @@
 			
 			.useable_card					{ width:150px; height:50px; float:left; text-align:center; padding-top:10px }
 			.hover_div 						{ position: relative; }
-			.big_img_right 					{ height: 150px; width: 200px; position: absolute; top: -40px; left: 300px; display:none; z-index:100; }
-			.big_img_left 					{ height: 150px; width: 200px; position: absolute; top: -40px; right: 300px; display:none; z-index:100; }
-			.big_img_right_closer 			{ height: 150px; width: 200px; position: absolute; bottom: 30px; left: 135px; display:none; z-index:100; }
+			.big_img_right 					{ height: 200px; width: 200px; position: absolute; top: -40px; left: 300px; display:none; z-index:100; }
+			.big_img_left 					{ height: 200px; width: 200px; position: absolute; top: -40px; right: 300px; display:none; z-index:100; }
+			.big_img_right_closer 			{ height: 200px; width: 200px; position: absolute; bottom: 30px; left: 135px; display:none; z-index:100; }
 			.hover_div:hover .big_img_right { display:block; }
 			.hover_div:hover .big_img_left 	{ display:block; }
 			.hover_div:hover .big_img_right_closer 	{ display:block; }
@@ -264,11 +266,15 @@
 					<div class="hand_label" style="height:20px">
 						<div class="hand_title_div text_div"><b> Hand </b></div>
 						<div class="info_div"> {{ decision_info }}</div>
+						<div class="choice_div">
+							<button ng-class="{invisible: !choice}" class="decision_button btn btn-primary" type="button" ng-click="make_choice(true)">Yes</button>
+							<button ng-class="{invisible: !choice}" class="decision_button btn btn-primary" type="button" ng-click="make_choice(false)">No</button>
+						</div>
 						<div class="decision_div">
-							<button ng-class="{invisible: !decision}" class="decision_button" type="button" ng-click="make_decision()" style="margin-top:10px">Done</button>
+							<button ng-class="{invisible: !decision}" class="decision_button btn btn-primary" type="button" ng-click="make_decision()">Done</button>
 						</div>
 					</div>
-					<div class="hand_div" ng-repeat="card in hand">
+					<div class="hand_div" ng-repeat="card in hand_view">
 						<div ng-class="{selected: card.selected,
 						coin_card: (card.type.indexOf('coin') != -1 && player_turn && !selecting_cards),
 						action_card: (card.type.indexOf('action') != -1 && card.type.indexOf('reaction') == -1 && player_turn && !selecting_cards),
