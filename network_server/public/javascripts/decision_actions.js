@@ -19,6 +19,7 @@ Player_Decision.prototype.init = function(){
 	this.scope.gaining_cards = false;
 	this.scope.waiting = false;
 	this.scope.decision_info = "";
+	this.scope.restrict_type = []
 	
 	this.scope.hand_view = this.scope.hand;
 }
@@ -58,6 +59,9 @@ Player_Decision.prototype.parse_decision = function(actions){
 		}
 		if(this.actions['action'] == 'peek_discard'){
 			this.peek_discard(this.actions['value']);
+		}
+		if(this.actions['action'] == 'play_action'){
+			this.play_action(this.actions['value']);
 		}
 		if(this.actions['action'] == 'wait_others'){
 			this.wait_others();
@@ -124,6 +128,17 @@ Player_Decision.prototype.peek_discard = function(value){
 		this.action = "discard_deck";
 	}
 
+}
+
+Player_Decision.prototype.play_action = function(value){
+	console.log('Preparing gain_card selection');
+	this.scope.decision_info = 'Select an action to play ' + value + ' times';
+	
+	this.scope.decision = true;
+	this.scope.selecting_cards = true;
+	this.scope.restrict_type = ["action"];
+	this.action = "play_action:"+value;
+	this.value = 1;
 }
 
 Player_Decision.prototype.gain_card = function(value){

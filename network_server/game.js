@@ -3,7 +3,6 @@ function Game(players,cards,first) {
   this.cards = [];
   this.max_users = 2;
   this.current_turn = this.starting_player = first;
-  //this.game_started = null;
   for(var player in players){
 	  this.people[player] = {name:players[player]['name'],game:new Player_Data()};
   }
@@ -39,96 +38,13 @@ Game.prototype.return_gamedeck = function(cards){
 }
 
 Game.prototype.create_game = function(cards){
-	//this.pick_first();
 	this.cards = this.return_gamedeck(this.shuffle(cards));
 	console.log('Final card list');
 	console.log(this.cards);
-	for(var card in this.cards) {
-		this.cards[card]['current_quantity'] = this.cards[card]['quantity'];
-		this.cards[card]['selected'] = false;
-		//Now we have to create the descriptions for the cards
-		var description = [];
-		
-		for(var action in this.cards[card]['attrs']){
-			if(action === 'money'){
-				description.push("+$" + this.cards[card]['attrs']['money'] + "");
-			}
-			if(action === 'action'){
-				description.push("+" + this.cards[card]['attrs']['action'] + " Action");
-			}
-			if(action === 'buy'){
-				description.push("+" + this.cards[card]['attrs']['buy'] + " Buy");
-			}
-			if(action === 'card'){
-				description.push("+" + this.cards[card]['attrs']['card'] + " Card(s)");
-			}
-			if(action === 'victory'){
-				//parseInt(card['attrs']['buy'],10)
-				var victories = parseInt(this.cards[card]['attrs']['victory'],10);
-				description.push((victories>0?"+":"") + victories + " Victory");
-			}
-			if(action === 'card_opponents'){
-				description.push("+" + this.cards[card]['attrs']['card_opponents'] + " Card(s) Opponent(s)");
-			}
-			if(action === 'curse_opponents'){
-				description.push("+" + this.cards[card]['attrs']['curse_opponents'] + " Curse(s) Opponent(s)");
-			}
-			if(action === 'trash_under'){
-				description.push("Trash up to " + this.cards[card]['attrs']['trash_under'] + " Card(s)");
-			}
-			if(action === 'trash_specific'){
-				if(this.cards[card]['attrs']['trash_specific'] == this.cards[card]['name']){
-					description.push("Trash this card");
-				}else{
-					description.push("Trash a " + this.cards[card]['attrs']['trash_specific']);
-				}
-				//trash:"*",trash_actions:{money:"3"}
-				if(this.cards[card]['attrs']['trash'] === '*'){
-					if('money' in this.cards[card]['attrs']['trash_actions']){
-						description.push("Gain $" + this.cards[card]['attrs']['trash_actions']['money']);
-					}
-					if('gain_card' in this.cards[card]['attrs']['trash_actions']){
-						description.push("Gain a card <= $" + this.cards[card]['attrs']['trash_actions']['gain_card']);
-					}
-				}
-			}
-			if(action === 'gain_card'){
-				description.push("Gain card up to $" + this.cards[card]['attrs']['gain_card']);
-			}
-			if(action === 'immune'){
-				if(this.cards[card]['attrs']['immune'] === 'attack'){
-					description.push("Immune to attacks when shown");
-				}
-			}
-			if(action === 'discard'){
-				if(this.cards[card]['attrs']['discard'] === '*'){
-					//for(var discard_actions in card['attrs']['discard_action']){
-					console.log(this.cards[card]['attrs']);
-					console.log(this.cards[card]['attrs']['discard_actions']);
-					if('peek_discard' in this.cards[card]['attrs']['discard_actions']){
-						description.push("Players look at the top " + this.cards[card]['attrs']['discard_actions']['peek_discard'] + " card(s) of their deck");
-						description.push("Discard the card or put it back");
-					}
-					if('cards' in this.cards[card]['attrs']['discard_actions']){
-						if(this.cards[card]['attrs']['discard_actions']['cards'] === 'discard'){
-							description.push("Discard any number of cards");
-							description.push("+Cards equal to cards discarded");
-						}else{
-							//person['game']['extra_actions'].push({action:'discard_draw',value:cards[card]['attrs']['discard_action']['cards'],general:'discard'});
-						}
-					}
-					if('card_opponents_under' in this.cards[card]['attrs']['discard_actions']){
-						description.push("Other players discard down to " + this.cards[card]['attrs']['discard_actions']['card_opponents_under'] + " cards");
-					}
-				//}
-				}
-			}
-		}
-		this.cards[card]['description'] = description;
-  	}
-	//this.cards = cards;
-	console.log('Final card list');
-	console.log(this.cards);
+	
+	var helper = require('./helper_description');
+	this.cards = new helper(this.cards).cards;
+	
   	for(var person in this.people){
 		this.people[person]['game']['deck']=this.shuffle(this.get_starting_deck(this.cards));
 		this.people[person]['game']['stats'] = {turn:0,action:0,buy:0,money:0};
@@ -303,6 +219,8 @@ Game.prototype.use_card = function(user,card){
 	extra_actions = [];
 	var person = this.get_user(user);
 	
+	console.log(card);
+	
 	var card_index = this.find_card(card['name'],this.cards);
 	var hand_index = -1;
 	for(var position in person['game']['hand']){
@@ -310,15 +228,7 @@ Game.prototype.use_card = function(user,card){
 			hand_index = position;
 		}
 	}
-	console.log('Hand Index');
-	console.log(hand_index);
-	console.log('Deck Index');
-	console.log(card_index);
-	console.log('Raw Card');
-	console.log(card);
-	
-	//fruits.indexOf("Apple");
-	
+
 	if(this.check_actions(card)){
 		person['game']['stats']['action']--;
 	}
@@ -373,8 +283,6 @@ Game.prototype.use_card = function(user,card){
 			person['game']['extra_actions'].push({action:'trash_under',value:'4',general:'trash'});
 		}
 		if(action === 'trash_specific'){
-			//description.push("Trash a " + this.cards[card]['attrs']['trash_specific']);
-			//trash:"*",trash_actions:{money:"3"}
 			if(card['attrs']['trash'] === '*'){
 				var trash_action = "trash_specific";
 				if(card['attrs']['trash_specific'] == card['name']){
@@ -383,26 +291,22 @@ Game.prototype.use_card = function(user,card){
 				if('money' in card['attrs']['trash_actions']){
 					person['game']['extra_actions'].push({action:trash_action,value:card['attrs']['trash_specific'],general:'trash',
 						on_action:{action:'gain_money',value:card['attrs']['trash_actions']['money'],general:'immediate'}});
-					//person['game']['extra_actions'].push({action:'gain_money',value:'3',general:'immediate'});
 				}
 				if('gain_card' in card['attrs']['trash_actions']){
 					person['game']['extra_actions'].push({action:trash_action,value:card['attrs']['trash_specific'],general:'trash',
 						on_action:{action:'gain_card',value:card['attrs']['trash_actions']['gain_card'],general:'gain'}});
-					//person['game']['extra_actions'].push({action:'gain_money',value:'3',general:'immediate'});
 				}
 			}
 		}
 		if(action === 'gain_card'){
 			person['game']['extra_actions'].push({action:'gain_card',value:'4',general:'gain'});
 		}
-		//if(action === 'immune'){
-		//	person['game']['extra_actions'].push({action:'immune',value:'attack',general:'immune'});
-		//}
+		if(action == 'play_action'){
+			person['game']['extra_actions'].push({action:'play_action',value:parseInt(card['attrs']['play_action'],10),general:'multiply'});
+		}
 		if(action === 'discard'){
 			if(card['attrs']['discard'] == '*'){
-				//for(var discard_actions in card['attrs']['discard_action']){
 				if(card['attrs']['discard_actions']['peek_discard'] != undefined){
-					//var people_need_to_discard = true;
 					var need_to_wait = false;
 					for(var player in this.people){
 						if(this.people[player]['game']['deck'].length < 1 ){
@@ -422,7 +326,6 @@ Game.prototype.use_card = function(user,card){
 									console.log('didn\'t find reaction');
 									this.people[player]['game']['extra_actions'].push({action:'peek_discard',value:card['attrs']['discard_actions']['peek_discard'],general:'discard'});
 								}
-								//}
 							}else{
 								this.people[player]['game']['extra_actions'].push({action:'peek_discard',value:card['attrs']['discard_actions']['peek_discard'],general:'discard'});
 							}
@@ -463,7 +366,6 @@ Game.prototype.use_card = function(user,card){
 						person['game']['extra_actions'].push({action:'wait_others',value:'*',general:'waiting'});
 					}
 				}
-				//}
 			}
 		}
 	}
@@ -499,6 +401,10 @@ Game.prototype.player_decision_check = function(user_name){
 		}
 		if(person['game']['extra_actions'][actions]['general'] === 'avoid' || 
 				('alt_action' in person['game']['extra_actions'][actions] && person['game']['extra_actions'][actions]['alt_action']['general'] === 'avoid')){
+			return true;
+		}
+		if(person['game']['extra_actions'][actions]['general'] === 'multiply' || 
+				('alt_action' in person['game']['extra_actions'][actions] && person['game']['extra_actions'][actions]['alt_action']['general'] === 'multiply')){
 			return true;
 		}
 	}
@@ -541,12 +447,10 @@ Game.prototype.buy_card = function(user,raw_card){
 	var card_index = this.find_card(raw_card['name'],this.cards);
 	var card = this.cards[card_index];
 	
-	//if(card['cost'] <= person['game']['stats']['money'] && card['current_quantity'] > 0 && person['game']['stats']['buy'] > 0){
 	person['game']['stats']['money'] -= card['cost'];
 	person['game']['used'].push(card_index);
 	person['game']['stats']['buy']--;
 	this.cards[card_index]['current_quantity']--;
-	//}
 }
 
 Game.prototype.find_card = function(search_card, card_array){
@@ -619,15 +523,7 @@ Game.prototype.increment_turn = function(){
 	}
 }
 
-/*Game.prototype.pick_first = function(){
-	if(this.current_turn == -1){
-		console.log('Pick First');
-		this.current_turn = Math.floor((Math.random() * this.max_users));
-	}
-}*/
-
 Game.prototype.draw_hand = function(person,cards){
-	//this.people[person]
 	 var new_hand = [];
 	 for(var i = 0; i < cards; i++){
 		 if(person['game']['deck'].length<1){
@@ -670,7 +566,7 @@ Game.prototype.get_starting_deck = function(cards){
 				 deck.push(card);
 			 }
 		 }*/
-		 if(cards[card]['name'] == "Feast"){
+		 if(cards[card]['name'] == "Throne Room"){
 			 for(var i = 0; i < 3; i++){
 				 deck.push(card);
 			 }
@@ -680,7 +576,7 @@ Game.prototype.get_starting_deck = function(cards){
 				 deck.push(card);
 			 }
 		 }*/
-		 if(cards[card]['name'] == "Copper"){
+		 if(cards[card]['name'] == "Market"){
 			 for(var i = 0; i < 7; i++){
 				 deck.push(card);
 			 }

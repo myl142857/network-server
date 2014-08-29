@@ -24,6 +24,7 @@ function gameController($scope, $http, $compile, socket) {
 	$scope.gaining_cards = false;
 	$scope.waiting = false;
 	$scope.game_over = false;
+	$scope.restrict_type = [];
  
 	socket.on('start_game', function (data) {
 		console.log('Starting game!');
@@ -158,6 +159,51 @@ function gameController($scope, $http, $compile, socket) {
 		 }
 	 }
 	 
+	 $scope.type_in_array = function(cards){
+		 console.log('Entering Function');
+		 console.log(cards);
+		 for(var card in cards){
+			 console.log(card);
+			 var found = false;
+			 for(var type in cards[card]['type']){
+				 console.log('Checking for type');
+				 console.log(cards[card]['type']);
+				 console.log(cards[card]['type'][type]);
+				 console.log($scope.restrict_type);
+				 if($scope.restrict_type.indexOf(cards[card]['type'][type]) > -1){
+					 console.log('Found type!');
+					 found = true;
+					 break;
+				 }
+			 }
+			 if(!found){
+				 console.log('Returning False');
+				 return false;
+			 }
+		 }
+		 console.log('Returning True');
+		 return true;
+		 
+		 //Cool programming problem. Tell me why this doesn't work
+		 /*angular.forEach(cards, function(card) {
+			 var found = false;
+			 console.log(card);
+			 angular.forEach(card['type'], function(type) {
+				 console.log(type);
+				 console.log($scope.restrict_type);
+				 if(type in $scope.restrict_type){
+					 found = true;
+				 }
+			 });
+			 if(!found){
+				 console.log('Returning False');
+				 return false;
+			 }
+		 });
+		 console.log('Returning True');
+		 return true;*/
+	 }
+	 
 	 $scope.make_decision = function(){
 		 console.log('Making decision');
 		 if($scope.selecting_cards){
@@ -177,7 +223,14 @@ function gameController($scope, $http, $compile, socket) {
 				 console.log($scope.player_decision.value);
 				 console.log(selected_cards);
 				 console.log($scope.player_decision.value);
-				 socket.emit('card_decision_made',{ name:$scope.username, cards:selected_cards , action: $scope.player_decision.action, on_action:$scope.player_decision.on_action });
+				 
+				 
+				 if($scope.restrict_type.length < 1 || $scope.type_in_array(selected_cards)){
+					 console.log('Card sent through!');
+					 socket.emit('card_decision_made',{ name:$scope.username, cards:selected_cards , action: $scope.player_decision.action, on_action:$scope.player_decision.on_action });
+				 }else{
+					 alert('Please select the right card type');
+				 }
 			 }else{
 				 alert('Please select the correct card amount');
 			 }
