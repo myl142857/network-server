@@ -3,26 +3,11 @@
 var express = require('express');
 var router = express.Router();
 var uuid = require('node-uuid');
-//var app = require('../app');
-//var game = require('../game');
 var Room = require('../room');
-//console.log(express());
-//console.log(router);
-//var server = app.get('server');
-//var server = express['server'];
-
-//console.log(express);
-//console.log(server);
-
-//var http = require('http');
 
 var lobby = new Room("Lobby", "001", "admin");
 var clients = {};
 var game_rooms = [];
-
-/*var people = [];
-var games = {};
-var clients = [];*/
 
 var card_meta = [ 
                  //These cards are always available
@@ -46,6 +31,7 @@ var card_meta = [
                  {name:"Moneylender",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:4,attrs:{trash_specific:"Copper",trash:"*",trash_actions:{money:"3"}}},
                  {name:"Smithy",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:4,attrs:{card:"3"}},
                  {name:"Spy",avail:false,deck:"dominion",quantity:10,picture:"",type:["action","attack"],cost:4,attrs:{card:"1",action:"1",discard:"*",discard_actions:{peek_discard:"1"}}},
+                 {name:"Throne Room",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:4,attrs:{action:"1",play_action:"2"}},
                  {name:"Council Room",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"4",buy:"1",card_opponents:"1"}},
                  {name:"Festival",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{action:"1",buy:"1",money:"2"}},
                  {name:"Laboratory",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"2",action:"1"}},
@@ -220,19 +206,12 @@ router.run_server = function(listener){
 			var deletes = [];
 			if(socket.handshake.headers.sessionID != undefined){
 				for(var client in clients){
-					console.log('Looking for: ' + socket.handshake.headers.sessionID);
-					console.log('Found: ' + clients[client]['session_id']);
 					if(clients[client]['session_id'] == socket.handshake.headers.sessionID){
-						console.log('Found match!');
 						user_name = lobby.search_by_socket(client);
-						console.log(user_name);
 						if(user_name!=null){
-							console.log('User is logged in!');
-							console.log('Name: ' + user_name.name);
 							server.sockets.emit('exit_game', { name: user_name.name });
 							var lobby_index = lobby.get_user_index(user_name.name);
 							lobby['people'].splice(lobby_index, 1);
-							console.log('Logged out of lobby');
 							server.sockets.emit('user', { users: get_user_info() });
 							server.sockets.emit('room', { rooms: get_room_info() });
 						}
@@ -243,49 +222,7 @@ router.run_server = function(listener){
 					delete clients[item];
 				}
 			}
-			/*console.log('Remaining Clients');
-			for(var client in clients){
-				console.log(client);
-			}*/
-			
-			//socket.socket.reconnect();
-			
-			/*for(var client in clients){
-				if(clients[client]['session_id'] == socket.handshake.headers.sessionID){
-					//This socket belongs to the session
-					
-				}
-			}*/
 		 });
-		
-		//setTimeout(function() {
-			
-			/*
-			//server.sockets.get('user_name', function (err, name) {
-			console.log('User timeout!');
-			//close the connection and log the user out after 10 min of inactivity
-			console.log(lobby);
-			var user_name = socket.username;
-			console.log(user_name);
-			console.log('Name: ' + user_name);
-			//log out of game room
-			server.sockets.emit('exit_game', { name: user_name });
-			console.log('Logged out of game_room');
-			
-			//log out of lobby
-			var lobby_index = lobby.get_user_index(user_name);
-			lobby['people'].splice(lobby_index, 1);
-			console.log('Logged out of lobby');
-			
-			server.sockets.emit('user', { users: get_user_info() });
-			server.sockets.emit('room', { rooms: get_room_info() });
-			console.log('Clients updated');
-			//});
-			*/
-			//server.close();
-		//}, 1 * 60 * 1000);
-		
-	    //socket.emit('message', { message: 'welcome to the chat' });
 		
 		router.get('/users', function(req, res) {	
 			
@@ -336,6 +273,14 @@ router.run_server = function(listener){
 	    		if(data.action == "discard_deck"){
 	    			result_message = room.game.discard_deck(user,cards);
 	    		}
+	    		if(data.action.indexOf("play_action") > -1){
+	    			for(var i = 0; i < parseInt(data.action.split(":")[1]);i++){
+	    				console.log(cards[0]['type']);
+	    				if(cards[0]['type'].indexOf('action') > -1){
+			    			room.game.use_card(user,cards[0]);
+	    				}
+	    			}
+	    		}
 	    		if(data.action == "avoid"){
 	    			result_message = [room.game.people[room.game.get_user_index(user)]['name'] + " shows reaction card and avoids attack!"];
 	    		}
@@ -352,25 +297,21 @@ router.run_server = function(listener){
 	    		}
 	    		//If all the other players are done, removing the waiting action
 	    		if(!still_waiting){
-	    			//person['game']['extra_actions'].push({action:'wait_others',value:'*',general:'waiting'});
 	    			for(var action in room.game['people'][room.game.current_turn]['game']['extra_actions']){
 	    				if(room.game['people'][room.game.current_turn]['game']['extra_actions'][action]['general'] === 'waiting'){
 	    					room.game['people'][room.game.current_turn]['game']['extra_actions'].splice(action, 1);
 	    				}
 	    			}
-	    			//room.game['people'][room.game.current_turn]['game']['extra_actions'] = [];
 	    		}
-	    		//user_index == room.game.current_turn
-	    		
-	    		console.log('Extra actions');
-	    		console.log(room.game['people'][user_index]['game']);
 	    		
 	    		for(var person in room.game.people){
 	    			clients[room['people'][person]['socket']].emit('update',room.game.game_package(room.game['people'][person]['name']));
 	    		}
+	    		
 	    		for(var message in result_message){
 		    		server.sockets.in(room['name']).emit('message',{ message: result_message[message] });
 	    		}
+	    		
 		    	if(room.game.game_over()){
 		    		console.log('Game Over');
 		    		console.log(room.game.game_ended);

@@ -23,15 +23,12 @@ var app = express();
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
-//app.engine('html', engines.mustache);
-//app.set('view engine', 'html');
-
+app.set('port', process.env.PORT || 80);
 app.use(favicon());
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 app.use(cookieParser('dominion clone'));
-//console.log(cookieParser);
 app.use(session({
   genid: function(req) {
     return ""+intformat(generator.next(), 'dec'); // use UUIDs for session IDs
