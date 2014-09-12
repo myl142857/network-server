@@ -49,28 +49,7 @@ function lobbyController($scope, $http, $compile, socket) {
     	console.log('Got message back');
     	console.log(data);
         if(data.message) {
-           /* if(data.action == 'use'){
-            	data.message = 'uses ' + data.message;
-            }
-            if(data.action == 'buy'){
-            	$scope.opponent_buy_card(data.message);
-            	data.message = 'buys ' + data.message;
-            }
-        	$scope.messages.push(data);
-            var html = '';
-            for(var i=0; i<$scope.messages.length; i++) {
-                html += '<b>' + ($scope.messages[i].username ? $scope.messages[i].username : 'Server') + ': </b>';
-                html += $scope.messages[i].message + '<br />';
-            }
-            $('#content').html(html);
-            $("#content").scrollTop($("#content")[0].scrollHeight);
-            $("#field").val('');
-            if(data.action === 'end_turn'){
-	            $scope.player_turn = !$scope.player_turn;
-	            if($scope.player_turn){
-	            	$scope.draw();
-	            }
-            }*/
+        	//The message code would go here if it mattered...
         } else {
             console.log("There is a problem:", data);
         }
@@ -181,24 +160,7 @@ function lobbyController($scope, $http, $compile, socket) {
 			alert('This room is already full!');
 		}
 	};
-	   
-	 /*$scope.loadData = function () {
-		 console.log("Loading Page");
-	     $http.get('/users').success(function(data) {
-	    	 console.log(data);
-	    	 $scope.users = data.users;
-	    	 $scope.rooms = data.rooms;
-	    	 if(data.in_room){
-	    	 	 window.location = "/game";
-	    	 }
-	     });
-	  };*/
-	  
-	  /*$scope.test = function(){
-			console.log("Test"); 
-		};*/
-	 
-	//$scope.loadData();
+
 	$scope.login({name:""});
 	
 }

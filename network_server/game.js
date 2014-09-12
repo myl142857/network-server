@@ -100,7 +100,7 @@ Game.prototype.discard = function(user,cards){
 		}
 	}
 	//person['game']['hand'] = person['game']['hand'].concat(this.draw_hand(person,parseInt(discarded,10)));
-	message.push( person['name'] + " discards " + discarded + " cards" );
+	message.push( person['name'] + " discards " + discarded + " card" + (discarded>1?"s":""));
 	return message;
 }
 
@@ -185,12 +185,16 @@ Game.prototype.trash_cards = function(user,cards,on_action,trash_used){
 	}
 	if(perform_on_action){
 		console.log('action_performed');
-		if(on_action['general'] === 'immediate'){
-			if(on_action['action'] === 'gain_money'){
-				person['game']['stats']['money'] += parseInt(on_action['value'],10);
+		console.log(on_action);
+		for(var post_action in on_action){
+			console.log(on_action[post_action]);
+			if(on_action[post_action]['general'] === 'immediate'){
+				if(on_action[post_action]['action'] === 'gain_money'){
+					person['game']['stats']['money'] += parseInt(on_action[post_action]['value'],10);
+				}
+			}else{
+				person['game']['extra_actions'].push(on_action[post_action]);
 			}
-		}else{
-			person['game']['extra_actions'].push(on_action);
 		}
 	}
 	return message;
@@ -212,30 +216,39 @@ Game.prototype.gain_cards = function(user,cards){
 	return message;
 }
 
-Game.prototype.use_card = function(user,card){
+Game.prototype.use_card = function(user,card,discard_card){
 	
 	//These are the things that a player can do after playing a card
 	//Such as trashing other cards or making decisions
 	extra_actions = [];
 	var person = this.get_user(user);
 	
+	console.log("Using Card...");
 	console.log(card);
 	
 	var card_index = this.find_card(card['name'],this.cards);
 	var hand_index = -1;
+	console.log("Starting function hand");
+	console.log(person['game']['hand']);
 	for(var position in person['game']['hand']){
 		if(person['game']['hand'][position] == card_index){
 			hand_index = position;
 		}
 	}
 
-	if(this.check_actions(card)){
-		person['game']['stats']['action']--;
+	//This section is only passed up when a card is multiplied. Subtract actions and discard card
+	if(discard_card){
+		
+		if(this.check_actions(card)){
+			person['game']['stats']['action']--;
+		}
+		
+		person['game']['used'].push(person['game']['hand'][hand_index]);
+		person['game']['hand'].splice(hand_index, 1);
 	}
 	
-	person['game']['used'].push(person['game']['hand'][hand_index]);
-	person['game']['hand'].splice(hand_index, 1);
-	
+	//Make sure that the extra actions make sense when played twice in a row...
+	//Every time there is an onaction call make sure that doubles append to the onaction
 	for(var action in card['attrs']){
 		console.log(action);
 		if(action === 'money'){
@@ -289,12 +302,36 @@ Game.prototype.use_card = function(user,card){
 					trash_action = "trash_self";
 				}
 				if('money' in card['attrs']['trash_actions']){
-					person['game']['extra_actions'].push({action:trash_action,value:card['attrs']['trash_specific'],general:'trash',
-						on_action:{action:'gain_money',value:card['attrs']['trash_actions']['money'],general:'immediate'}});
+					var found_trash_action = false;
+					for(var action in person['game']['extra_actions']){
+						console.log(person['game']['extra_actions'][action]);
+						if(person['game']['extra_actions'][action]['action'] === trash_action){
+							person['game']['extra_actions'][action]['on_action'].push({action:'gain_money',value:card['attrs']['trash_actions']['money'],general:'immediate'});
+							found_trash_action = true;
+							console.log("Appending action");
+							console.log(person['game']['extra_actions'][action]);
+						}
+					}
+					if(!found_trash_action){
+						person['game']['extra_actions'].push({action:trash_action,value:card['attrs']['trash_specific'],general:'trash',
+							on_action:[{action:'gain_money',value:card['attrs']['trash_actions']['money'],general:'immediate'}]});
+					}
 				}
 				if('gain_card' in card['attrs']['trash_actions']){
-					person['game']['extra_actions'].push({action:trash_action,value:card['attrs']['trash_specific'],general:'trash',
-						on_action:{action:'gain_card',value:card['attrs']['trash_actions']['gain_card'],general:'gain'}});
+					var found_trash_action = false;
+					for(var action in person['game']['extra_actions']){
+						console.log(person['game']['extra_actions'][action]);
+						if(person['game']['extra_actions'][action]['action'] === trash_action){
+							person['game']['extra_actions'][action]['on_action'].push({action:'gain_card',value:card['attrs']['trash_actions']['gain_card'],general:'gain'});
+							found_trash_action = true;
+							console.log("Appending action");
+							console.log(person['game']['extra_actions'][action]);
+						}
+					}
+					if(!found_trash_action){
+						person['game']['extra_actions'].push({action:trash_action,value:card['attrs']['trash_specific'],general:'trash',
+							on_action:[{action:'gain_card',value:card['attrs']['trash_actions']['gain_card'],general:'gain'}]});
+					}
 				}
 			}
 		}
@@ -369,6 +406,8 @@ Game.prototype.use_card = function(user,card){
 			}
 		}
 	}
+	console.log("Ending Player Hand");
+	console.log(person['game']['hand']);
 }
 
 Game.prototype.check_attack_reaction = function(user_name){
@@ -539,7 +578,7 @@ Game.prototype.draw_hand = function(person,cards){
 		 }
 		 new_hand.push(person['game']['deck'].pop());
 	 }
-	 console.log('New hand');
+	 console.log('Drawing Cards...');
 	 console.log(new_hand);
 	 return new_hand;
 };
@@ -561,26 +600,26 @@ Game.prototype.reset_stats = function(person){
 Game.prototype.get_starting_deck = function(cards){
 	var deck = [];
 	for(var card in cards) {
-		 /*if(cards[card]['name'] == "Estate"){
-			 for(var i = 0; i < 3; i++){
-				 deck.push(card);
-			 }
-		 }*/
-		 if(cards[card]['name'] == "Throne Room"){
+		 if(cards[card]['name'] == "Estate"){
 			 for(var i = 0; i < 3; i++){
 				 deck.push(card);
 			 }
 		 }
-		 /*if(cards[card]['name'] == "Copper"){
-			 for(var i = 0; i < 7; i++){
+		 /*if(cards[card]['name'] == "Throne Room"){
+			 for(var i = 0; i < 3; i++){
 				 deck.push(card);
 			 }
 		 }*/
-		 if(cards[card]['name'] == "Market"){
+		 if(cards[card]['name'] == "Copper"){
 			 for(var i = 0; i < 7; i++){
 				 deck.push(card);
 			 }
 		 }
+		 /*if(cards[card]['name'] == "Feast"){
+			 for(var i = 0; i < 7; i++){
+				 deck.push(card);
+			 }
+		 }*/
 	};
 	console.log('Starting deck');
 	console.log(deck);
