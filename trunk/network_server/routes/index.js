@@ -31,7 +31,7 @@ var card_meta = [
                  {name:"Moneylender",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:4,attrs:{trash_specific:"Copper",trash:"*",trash_actions:{money:"3"}}},
                  {name:"Smithy",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:4,attrs:{card:"3"}},
                  {name:"Spy",avail:false,deck:"dominion",quantity:10,picture:"",type:["action","attack"],cost:4,attrs:{card:"1",action:"1",discard:"*",discard_actions:{peek_discard:"1"}}},
-                 {name:"Throne Room",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:4,attrs:{action:"1",play_action:"2"}},
+                 {name:"Throne Room",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:4,attrs:{/*action:"1",*/play_action:"2"}},
                  {name:"Council Room",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"4",buy:"1",card_opponents:"1"}},
                  {name:"Festival",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{action:"1",buy:"1",money:"2"}},
                  {name:"Laboratory",avail:false,deck:"dominion",quantity:10,picture:"",type:["action"],cost:5,attrs:{card:"2",action:"1"}},
@@ -274,12 +274,14 @@ router.run_server = function(listener){
 	    			result_message = room.game.discard_deck(user,cards);
 	    		}
 	    		if(data.action.indexOf("play_action") > -1){
+					console.log("Multiplier Played!");
 	    			for(var i = 0; i < parseInt(data.action.split(":")[1]);i++){
-	    				console.log(cards[0]['type']);
 	    				if(cards[0]['type'].indexOf('action') > -1){
-			    			room.game.use_card(user,cards[0]);
+			    			room.game.use_card(user,cards[0],false);
 	    				}
 	    			}
+	    			//Discard the multiplier card once it is used
+	    			result_message = room.game.discard(user,[cards[0]]);
 	    		}
 	    		if(data.action == "avoid"){
 	    			result_message = [room.game.people[room.game.get_user_index(user)]['name'] + " shows reaction card and avoids attack!"];
@@ -290,19 +292,33 @@ router.run_server = function(listener){
 	    		console.log(room.game['people'][user_index]['game']['extra_actions']);
 	    		
 	    		var still_waiting = false;
+	    		console.log("Printing out extra actions...");
 	    		for(var person in room.game.people){
+	    			
+	    			//console.log(room.game.people[person]['name']);
+	    			//console.log(room.game.people[person]['game']['extra_actions']);
+	    			
 	    			if(person!=room.game.current_turn && room.game.people[person]['game']['extra_actions'].length>0){
 	    				still_waiting = true;
 	    			}
 	    		}
 	    		//If all the other players are done, removing the waiting action
 	    		if(!still_waiting){
+	    			var extra_actions = [];
 	    			for(var action in room.game['people'][room.game.current_turn]['game']['extra_actions']){
+	    				//Append all the extra actions to the end of the new array. Take out the waitings...
 	    				if(room.game['people'][room.game.current_turn]['game']['extra_actions'][action]['general'] === 'waiting'){
-	    					room.game['people'][room.game.current_turn]['game']['extra_actions'].splice(action, 1);
+	    					//room.game['people'][room.game.current_turn]['game']['extra_actions'].splice(action, 1);
+	    				}else{
+	    					extra_actions.push(room.game['people'][room.game.current_turn]['game']['extra_actions'][action]);
 	    				}
 	    			}
+	    			room.game['people'][room.game.current_turn]['game']['extra_actions'] = extra_actions;
 	    		}
+	    		
+	    		//console.log("Extra Actions After");
+	    		//console.log(room.game.people[room.game.current_turn]['name']);
+	    		//console.log(room.game['people'][room.game.current_turn]['game']['extra_actions']);
 	    		
 	    		for(var person in room.game.people){
 	    			clients[room['people'][person]['socket']].emit('update',room.game.game_package(room.game['people'][person]['name']));
@@ -358,7 +374,7 @@ router.run_server = function(listener){
 	    	var user_index = room.game.get_user_index(user);
 	    	
 	    	if(user_index == room.game.current_turn && room.game.card_action_check(user,card)){
-	    		var extra_actions = room.game.use_card(user,card);
+	    		room.game.use_card(user,card,true);
 	    		for(var person in room.game.people){
 	    			clients[room['people'][person]['socket']].emit('update',room.game.game_package(room.game['people'][person]['name']));
 	    		}
